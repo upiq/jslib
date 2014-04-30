@@ -50,7 +50,7 @@ self[COREMODELNS] = (function ($, core) {
 
     core.klass = (function (ns) {
 
-        /* jshint newcap:false */
+        /* jshint newcap:false,proto:true */
 
         ns.subclasses = function subclasses(cls, base) {
             cls.prototype = new base();
@@ -58,12 +58,37 @@ self[COREMODELNS] = (function ($, core) {
             cls.prototype.constructor = cls;
         };
 
-        ns.bases = function bases(o) {
-            var ctor,
-                hasParent = function (o) { return Boolean(o.superclass); };
+        ns.prototypeFor = function (o, polyfill) {
+            if (typeof Object.getPrototypeOf !== 'function' || polyfill) {
+                // no ES5 support or forced use of polyfill (e.g. testing)
+                if (typeof ''.__proto__ === 'object') {
+                    return o.__proto__;
+                }
+                return o.constructor.prototype;
+            }
+            return Object.getPrototypeOf(o);
+        };
+
+        ns.get = function base(o) {
             o = (typeof(o) === 'function') ? new o() : o;
-            ctor = o.constructor;
-            return hasParent(o) ? [ctor].concat(ns.bases(o.superclass)) : [];
+            return ns.prototypeFor(o).constructor;
+        };
+
+        ns.base = function base(o) {
+            o = (typeof(o) === 'function') ? new o() : o;
+            return ns.prototypeFor(o).superclass || null;
+        };
+
+        /**
+         * classes, only that are explicitly using this framework,
+         * e.g. does not include Object.
+         */
+        ns.all = function bases(o) {
+            var ctor = ns.get(o),
+                base = ns.base(o),
+                hasParent = function (obj) { return !!ns.base(obj); };
+            o = (typeof(o) === 'function') ? new o() : o;
+            return hasParent(o) ? [ctor].concat(ns.all(base)) : [ctor];
         };
 
         return ns;

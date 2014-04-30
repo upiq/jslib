@@ -11,6 +11,10 @@
         strictEqual = qunit.strictEqual,
         ns = {};  // internal namespace
 
+
+    ns.MockContainer = function () {};
+    core.klass.subclasses(ns.MockContainer, core.Container);
+
     ns.tests = {};
 
     ns.tests['Meta tests'] = {
@@ -89,6 +93,40 @@
                 'UID set correctly, round-trip get correctly on object ' +
                 'previously with null UID.'
             );
+        }
+    };
+
+    ns.tests['klass module tests'] = {
+        'inheritance introspection': function () {
+            var plain = {},
+                item = new core.Item(),
+                container = new core.Container(),
+                mock = new ns.MockContainer();
+            ok(item instanceof core.Item, 'Base instanceof');
+            ok(core.klass.all(item).length === 1, 'item bases');
+            ok(core.klass.all(container).length === 2, 'container bases');
+            ok(core.klass.all(mock).length === 3, 'deeper hierarchy');
+            console.log(core.klass.all(container));
+            console.log(container.constructor.prototype.superclass);
+            deepEqual(
+                core.klass.all(container),
+                [core.Container, core.Item],
+                'Check two-level hierarchy'
+                );
+            deepEqual(
+                core.klass.all(mock),
+                [ns.MockContainer, core.Container, core.Item],
+                'Check three-level hierarchy'
+                );
+            equal(
+                core.klass.get(mock),
+                ns.MockContainer
+                );
+            equal(
+                core.klass.base(mock),
+                core.Container
+                );
+
         }
     };
 

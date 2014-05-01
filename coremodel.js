@@ -139,8 +139,8 @@ self[COREMODELNS] = (function ($, core) {
         this.init = function (id, context, target) {
             this.id = id || core.id.uuid4();
             this.observers = [];
-            this.context = context || null;
-            this.target = target || null;
+            this.context = context;
+            this.target = target;
         };
 
         // pre/post sync hooks for use by subclases:
@@ -157,7 +157,7 @@ self[COREMODELNS] = (function ($, core) {
                 component.sync(this);
             });
             this.postSync(observed);
-            if (this.target) {
+            if (this.target && this.target.length) {
                 this.syncTarget(observed);
             }
         };
@@ -192,41 +192,67 @@ self[COREMODELNS] = (function ($, core) {
             this.keys.splice(toIdx, 0, this.keys.splice(fromIdx,1)[0]);
         };
 
+        // Normalize key, so that we can specify by item
+        this._normalize = function (key) {
+            return (typeof key === 'string') ? key : core.id.getUID(key);
+        };
+
+
         // Notify context that it has changed
-        this._notify = function (key, fromIdx, toIdx, action) {
-            context.onReorder();
+        this._notify = function (key, fromIdx, toIdx, action, previous) {
+            var current = this.keys.slice(0),  // current, after change
+                note = 'Moved ' + key + ': ' + action;
+            this.context.onReorder(previous, current, note);
+        };
+
+        this.setOrder = function (keys) {
+            //explicitly set key order on context
+            this.context[this._attr] = keys.map(this._normalize);
+        };
+
+        this.move = function (key, fromIdx, toIdx, action) {
+            var previous = this.keys.slice(0);
+            key = this._normalize(key);
+            if (fromIdx && this.keys[fromIdx] !== key) {
+                // may be invalid call or race condition, so:
+                throw new Error('Key and index do not match');
+            } else if (fromIdx === null) {
+                fromIdx = this.keys.indexOf(key);
+            }
+            // bounds checking on toIdx:
+            if (toIdx < 0 || toIdx > this.keys.length - 1) {
+                throw new RangeError('invalid index');
+            }
+            this._move(fromIdx, toIdx);
+            this._notify(key, fromIdx, toIdx, action, previous);
         };
 
         this.moveUp = function (key) {
-            var idx = this.keys.indexOf(key);
+            var idx = this.keys.indexOf(this._normalize(key));
             if (idx > 0) {
-                this._move(idx, idx - 1);
-                this._notify(key, idx, idx - 1, 'move up');
+                this.move(key, idx, idx - 1, 'move up');
             }
         };
 
         this.moveDown = function (key) {
-            var idx = this.keys.indexOf(key);
+            var idx = this.keys.indexOf(this._normalize(key));
             if (idx < this.keys.length - 1) {
-                this._move(idx, idx + 1);
-                this._notify(key, idx, idx - 1, 'move down');
+                this.move(key, idx, idx + 1, 'move down');
             }
         };
 
         this.moveToTop = function (key) {
-            var idx = this.keys.indexOf(key);
+            var idx = this.keys.indexOf(this._normalize(key));
             if (idx > 0) {
-                this._move(idx, 0);
-                this._notify(key, idx, 0, 'move to top');
+                this.move(key, idx, 0, 'move to top');
             }
         };
 
         this.moveToBottom = function (key) {
-            var idx = this.keys.indexOf(key),
+            var idx = this.keys.indexOf(this._normalize(key)),
                 destIdx = this.keys.length - 1;
             if (idx < destIdx) {
-                this._move(idx, destIdx);
-                this._notify(key, idx, destIdx, 'move to bottom');
+                this.move(key, idx, destIdx, 'move to bottom');
             }
         };
 
@@ -237,6 +263,8 @@ self[COREMODELNS] = (function ($, core) {
      *            keyed by UUID.  Orderable via this.order.
      */
     core.Container = function Container(kwargs) {
+
+        this.namespace = 'container';
 
         this.init = function (kwargs) {
             var args = kwargs || {},
@@ -271,7 +299,7 @@ self[COREMODELNS] = (function ($, core) {
             this.sync();
         };
 
-        this.onReorder = function () {
+        this.onReorder = function (previous, current, note) {
             this.sync();
         };
 

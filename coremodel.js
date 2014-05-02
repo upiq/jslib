@@ -312,6 +312,9 @@ window[COREMODELNS] = (function ($, core) {
 
         // Mapping set and delete
         this.set = function (key, value) {
+            if (!key) {
+                throw new Error('Invalid key');
+            }
             var isAdd = (!this._has(key));
             this._values[key] = value;
             this._keys.push(key);

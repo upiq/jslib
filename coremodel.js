@@ -156,7 +156,7 @@ self[COREMODELNS] = (function ($, core) {
             }
             this.observers.forEach(function (component) {
                 component.sync(this);
-            });
+            }, this);
             this.postSync(observed);
             if (this.target && this.target.length) {
                 this.syncTarget(observed);
@@ -275,9 +275,15 @@ self[COREMODELNS] = (function ($, core) {
             this._values = {};
             this.order = new core.ContainerOrder(this, '_keys');
             if (iterable && iterable.length) {
-                iterable.forEach(function (pair) {
-                    this._values[pair[0]] = pair[1];
-                    this._keys.push(pair[0]);
+                iterable.forEach(function (spec) {
+                    if (spec instanceof Array) {
+                        this.set(spec[0], spec[1]);
+                    } else if (spec instanceof core.Item) {
+                        this.add(spec);
+                    } else {
+                        throw new TypeError('Invalid item');
+                    }
+
                 }, this);
             }
             // superclass init, pass args:
@@ -325,9 +331,19 @@ self[COREMODELNS] = (function ($, core) {
             return true;
         };
 
+        // convenience setter: add() allows getting key from value:
+        this.add = function (item) {
+            var uid = ns.core.getUID(item);
+            if (this.has(uid)) {
+                throw new Error('Container already has item with uid ' + uid);
+            }
+            this.set(uid, item);
+        };
+
         // containment and size:
 
         this.has = function (key) {
+            key = this.order._normalize(key);
             return (this._keys.indexOf(key) < 0) ? false : true;
         };
 

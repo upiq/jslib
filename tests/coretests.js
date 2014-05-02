@@ -413,6 +413,7 @@
                     [item3.id, item3],
                 ]
             }),
+            original = [item1.id, item2.id, item3.id],
             tests;
 
         tests = {
@@ -443,28 +444,90 @@
                     container2 = new core.Container({
                         id: uid2,
                         iterable: []
+                    }),
+                    container3 = new core.Container({
+                        iterable: [item1, [item2.id, item2], item3]
                     });
-                ok(1==1);  // TODO replace boilerplatea
-                // TEST construction with iterable
+                // TEST construction with iterable:
+                equal(container3.size(), 3, 'construct with values: size');
+                [item1, item2, item3].forEach(function (item) {
+                    ok(container3.has(item.id), 'has() passed by item');
+                    ok(container3.has(item), 'has() value passed by item');
+                }, this);
+                original.forEach(function (uid) {
+                    ok(container3.has(uid), 'has() passed by id');
+                }, this);
                 // TEST construction with id
+                equal(container1.id, uid1, 'id passed 1');
+                equal(container2.id, uid2, 'id passed 2');
                 // TEST construction with context
+                equal(container1.context, context, 'context passed');
                 // TEST construction with target
+                equal(container1.target, target, 'target passed');
             },
-            'test set/get': function () {
-                ok(1==1);  // TODO replace boilerplate
-
+            'test set/get/delete': function () {
+                var uid1 = item1.id,
+                    container = new core.Container();
+                strictEqual(container.get(uid1), undefined, 'get before set');
+                container.set(uid1, item1);
+                strictEqual(container.get(uid1), item1, 'get after set');
+                container.delete(uid1);
+                strictEqual(container.get(uid1), undefined, 'get after rem');
+            },
+            'test add by value': function () {
+                var uid1 = item1.id,
+                    container = new core.Container();
+                container.add(item1);
+                strictEqual(container.get(uid1), item1, 'get after add');
+                container.delete(uid1);
+                strictEqual(container.get(uid1), undefined, 'get after rem');
             },
             'test containment (has)': function () {
-                ok(1==1);  // TODO replace boilerplate
-
+                var uid1 = item1.id,
+                    container = new core.Container();
+                ok(!container.has(uid1), 'intial container has()');
+                ok(!container.has(item1), 'intial container has()');
+                equal(container.size(), 0, 'initial container size');
+                container.set(uid1, item1);
+                ok(container.has(uid1), 'intial container has()');
+                ok(container.has(item1), 'intial container has()');
+                equal(container.size(), 1, 'initial container size');
+                container.delete(uid1);
+                ok(!container.has(uid1), 'intial container has()');
+                ok(!container.has(item1), 'intial container has()');
+                equal(container.size(), 0, 'initial container size');
             },
             'test size': function () {
-                ok(1==1);  // TODO replace boilerplate
-
+                var uid1 = item1.id,
+                    container = new core.Container();
+                equal(container.size(), 0, 'initial container size');
+                container.set(uid1, item1);
+                equal(container.size(), 1, 'initial container size');
+                container.delete(uid1);
+                equal(container.size(), 0, 'initial container size');
             },
             'test enumeration': function () {
-                ok(1==1);  // TODO replace boilerplate
-
+                var container = new core.Container(),
+                    items = [item1, item2, item3],
+                    cb_called = 0,
+                    callback = function (v, k, container) {
+                        equal(container.get(k), v, 'callback eq');
+                        cb_called += 1;
+                    };
+                items.forEach(function (item) {
+                    container.add(item);
+                }, this);
+                // test original order, inclusion; note order change
+                // is tested sufficiently elsewhere.
+                deepEqual(container.keys(), original, 'keys()');
+                deepEqual(container.values(), items, 'values()');
+                deepEqual(
+                    container.entries(),
+                    items.map(function (o) { return [o.id, o]; }),
+                    'entries()'
+                );
+                container.forEach(callback, this);
+                equal(cb_called, items.length, 'callback count');
             },
             'test after-deletion hook': function () {
                 ok(1==1);  // TODO replace boilerplate

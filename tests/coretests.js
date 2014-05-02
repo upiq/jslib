@@ -1,5 +1,5 @@
 /*jshint browser: true, nomen: false, eqnull: true, es5:true, trailing:true, undef:true */
-/*global jQuery, console, QUnit, COREMODELNS */
+/*global jQuery, console, QUnit, COREMODELNS, window */
 
 (function ($, qunit, core) {
     "use strict";

@@ -1,9 +1,10 @@
-/*jshint browser: true, nomen: false, eqnull: true, es5:true, trailing:true */
+/*jshint browser: true, nomen: false, eqnull: true, es5:true, trailing:true, undef:true */
+/*global jQuery, window */
 
 // coremodel namespace; can be overridden prior to loading
 var COREMODELNS = 'coremodel';  // global ns, can be 
 
-self[COREMODELNS] = (function ($, core) {
+window[COREMODELNS] = (function ($, core) {
     "use strict";
 
     // coremodel.id module:
@@ -333,7 +334,7 @@ self[COREMODELNS] = (function ($, core) {
 
         // convenience setter: add() allows getting key from value:
         this.add = function (item) {
-            var uid = ns.core.getUID(item);
+            var uid = core.id.getUID(item);
             if (this.has(uid)) {
                 throw new Error('Container already has item with uid ' + uid);
             }
@@ -387,5 +388,5 @@ self[COREMODELNS] = (function ($, core) {
 
     return core;
 
-}(jQuery, self[COREMODELNS] || {}));
+}(jQuery, window[COREMODELNS] || {}));
 

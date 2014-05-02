@@ -1,7 +1,8 @@
-/*jshint browser: true, nomen: false, eqnull: true, es5:true, trailing:true */
-
+/*jshint browser: true, nomen: false, eqnull: true, es5:true, trailing:true, undef:true */
+/*global jQuery, console, QUnit, COREMODELNS */
 
 (function ($, qunit, core) {
+    "use strict";
 
     var test = qunit.test,
         ok = qunit.ok,
@@ -21,7 +22,6 @@
             this._old_order = previous;
             this._new_order = current;
             this._log.push(note);
-            console.log(note);
         };
 
         ns.MockContainer.prototype.init.apply(this, [kwargs]);
@@ -251,12 +251,12 @@
         }
     };
 
-    ns.tests['Container ordering adapter tests'] = (function () {
+    ns.tests['Container ordering adapter tests'] = function () {
 
         // common fixures are shared state (closure) for this module:
         var item1 = new core.Item(),
             item2 = new core.Item(),
-            item3 = new core.Item();
+            item3 = new core.Item(),
             mock = new ns.MockContainer({
                 iterable: [
                     [item1.id, item1],
@@ -265,9 +265,11 @@
                 ]
             }),
             original = [item1.id, item2.id, item3.id],
-            adapter = new core.ContainerOrder(mock);
+            adapter = new core.ContainerOrder(mock),
+            adapter2 = new core.ContainerOrder(mock),
+            tests;
 
-        return {
+        tests = {
             'order adaptation': function () {
                 ok(mock.order instanceof core.ContainerOrder, 'Adapter test');
                 ok(adapter instanceof core.ContainerOrder, 'Adaptation');
@@ -382,73 +384,109 @@
                 deepEqual(mock.keys(), original, 'Initial key order');
             },
         };
-    }());
 
-    ns.tests['Container tests'] = {
-        'container defaults': function () {
-            var container = new core.Container();
-            ok(core.id.isUUID(container.id), 'Container auto-UUID');
-            strictEqual(
-                container.target,
-                undefined,
-                'default target undefined'
-            );
-            strictEqual(
-                container.context,
-                undefined,
-                'default context undefined'
-            );
-        },
-        'container construction': function () {
-            ok(1==1);  // TODO replace boilerplatea
-            // TEST construction with iterable
-            // TEST construction with id
-            // TEST construction with context
-            // TEST construction with target
-        },
-        'test set/get': function () {
-            ok(1==1);  // TODO replace boilerplate
+        return tests;
+    };
 
-        },
-        'test containment (has)': function () {
-            ok(1==1);  // TODO replace boilerplate
+    ns.tests['Container tests'] = function () {
 
-        },
-        'test size': function () {
-            ok(1==1);  // TODO replace boilerplate
+        var item1 = new core.Item(),
+            item2 = new core.Item(),
+            item3 = new core.Item(),
+            mock = new ns.MockContainer({
+                iterable: [
+                    [item1.id, item1],
+                    [item2.id, item2],
+                    [item3.id, item3],
+                ]
+            }),
+            tests;
 
-        },
-        'test enumeration': function () {
-            ok(1==1);  // TODO replace boilerplate
+        tests = {
+            'container defaults': function () {
+                var container = new core.Container();
+                ok(core.id.isUUID(container.id), 'Container auto-UUID');
+                strictEqual(
+                    container.target,
+                    undefined,
+                    'default target undefined'
+                );
+                strictEqual(
+                    container.context,
+                    undefined,
+                    'default context undefined'
+                );
+            },
+            'container construction': function () {
+                var uid1 = core.id.uuid4(),
+                    uid2 = core.id.uuid4(),
+                    target = $('<div>'),
+                    context = new ns.MockContext(),
+                    container1 = new core.Container({
+                        id: uid1,
+                        target: target,
+                        context: context,
+                    }),
+                    container2 = new core.Container({
+                        id: uid2,
+                        iterable: []
+                    });
+                ok(1==1);  // TODO replace boilerplatea
+                // TEST construction with iterable
+                // TEST construction with id
+                // TEST construction with context
+                // TEST construction with target
+            },
+            'test set/get': function () {
+                ok(1==1);  // TODO replace boilerplate
 
-        },
-        'test after-deletion hook': function () {
-            ok(1==1);  // TODO replace boilerplate
+            },
+            'test containment (has)': function () {
+                ok(1==1);  // TODO replace boilerplate
 
-        },
-        'test afterAdd hook': function () {
-            ok(1==1);  // TODO replace boilerplate
+            },
+            'test size': function () {
+                ok(1==1);  // TODO replace boilerplate
 
-        },
-        'test reorder, post re-order hook': function () {
-            ok(1==1);  // TODO replace boilerplate
-            // TODO: test reorder of three items
-            //  bottom, top, up, down
-            // TODO: test that onReorder() hook on mock
-            //       is fired on changes.
-        }
+            },
+            'test enumeration': function () {
+                ok(1==1);  // TODO replace boilerplate
+
+            },
+            'test after-deletion hook': function () {
+                ok(1==1);  // TODO replace boilerplate
+
+            },
+            'test afterAdd hook': function () {
+                ok(1==1);  // TODO replace boilerplate
+
+            },
+            'test reorder, post re-order hook': function () {
+                ok(1==1);  // TODO replace boilerplate
+                // TODO: test reorder of three items
+                //  bottom, top, up, down
+                // TODO: test that onReorder() hook on mock
+                //       is fired on changes.
+            }
+        };
+
+        return tests;
     };
 
     $(document).ready(function () {
         var key;
+        qunit.config.reorder = false;
         Object.keys(ns.tests).forEach(function (modname) {
             var suite = ns.tests[modname];
             module(modname);
+            if (typeof suite === 'function') {
+                suite = suite();
+            }
             Object.keys(suite).forEach(function (k) {
-                var fn = suite[k];
+               var fn = suite[k];
                 test(k, fn);
             });
         });
     });
 
-}(jQuery, QUnit, self[COREMODELNS]));
+}(jQuery, QUnit, window[COREMODELNS]));

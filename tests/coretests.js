@@ -17,11 +17,23 @@
         this.namespace = 'mock';
 
         this._log = [];
+        this._added = [];
+        this._removed = [];
 
         this.onReorder = function onReorder(previous, current, note) {
             this._old_order = previous;
             this._new_order = current;
             this._log.push(note);
+        };
+
+        this.afterAdd = function (key, value) {
+            var result = this.get(key) == value; // value contained after add
+            this._added.push([key, result]);
+        };
+
+        this.afterDelete = function (key, value) {
+            var result = (!!value && !this.has(key));
+            this._removed.push([key, result]);
         };
 
         ns.MockContainer.prototype.init.apply(this, [kwargs]);
@@ -530,19 +542,60 @@
                 equal(cb_called, items.length, 'callback count');
             },
             'test after-deletion hook': function () {
-                ok(1==1);  // TODO replace boilerplate
-
+                var container = new ns.MockContainer({
+                        iterable: [item1]
+                    }),
+                    removed_uid,
+                    assertions_passed;
+                container.delete(item1.id);
+                removed_uid = container._removed[0][0];
+                assertions_passed = container._removed[0][1];
+                equal(removed_uid, item1.id, 'removed id');
+                ok(assertions_passed, 'Value assertions in hook pass');
             },
             'test afterAdd hook': function () {
-                ok(1==1);  // TODO replace boilerplate
-
+                var container = new ns.MockContainer(),
+                    added_uid,
+                    assertions_passed;
+                // via add()
+                container.add(item1);
+                added_uid = container._added[0][0];
+                assertions_passed = container._added[0][1];
+                equal(added_uid, item1.id, 'added id');
+                ok(assertions_passed, 'Value assertions in hook pass');
+                // add an item via set():
+                container.set(item2.id, item2);
+                added_uid = container._added[1][0];
+                assertions_passed = container._added[1][1];
+                equal(added_uid, item2.id, 'added id');
+                ok(assertions_passed, 'Value assertions in hook pass');
+                // set an item already in, no hook fires:
+                container.set(item2.id, item2);
+                equal(container._added.length, 2, 'not fired on non-add set');
             },
-            'test reorder, post re-order hook': function () {
-                ok(1==1);  // TODO replace boilerplate
-                // TODO: test reorder of three items
-                //  bottom, top, up, down
-                // TODO: test that onReorder() hook on mock
-                //       is fired on changes.
+            'test post re-order hook': function () {
+                var container = new ns.MockContainer({
+                        iterable: [item1, item2, item3]
+                    });
+                // testing assumption about implementation:
+                //   avoid being repetitive, since hook is called by move()
+                //   so we do not test each possible move action here
+                deepEqual(container.keys(), original, 'initial key order');
+                ok(
+                    !container._old_order && !container._new_order,
+                    'hook order undefined'
+                );
+                container.order.moveUp(item2.id);
+                deepEqual(
+                    container._old_order,
+                    original,
+                    'after move, hook previous key order'
+                );
+                deepEqual(
+                    container._new_order,
+                    [item2.id, item1.id, item3.id],
+                    'after move, hook previous key order'
+                );
             }
         };
 

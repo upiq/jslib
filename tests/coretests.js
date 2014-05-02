@@ -173,6 +173,19 @@
             var item = new core.Item();
             ok(core.id.isUUID(item.id), 'Item auto-UUID');
         },
+        'item construction': function () {
+            var uid = core.id.uuid4(),
+                target = $('<div>'),
+                context = new ns.MockContext(),
+                item = new core.Item({
+                    id: uid,
+                    context: context,
+                    target: target
+                });
+            equal(item.id, uid, 'id passed from contstruction');
+            equal(item.target, target, 'target passed');
+            equal(item.context, context, 'context passed');
+        },
         'item identification': function () {
             var item = new core.Item();
             equal(

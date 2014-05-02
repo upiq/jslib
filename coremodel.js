@@ -307,12 +307,12 @@ window[COREMODELNS] = (function ($, core) {
 
         // Mapping access
         this.get = function (key) {
-            return (this.has(key)) ? this._values[key] : undefined;
+            return (this._has(key)) ? this._values[key] : undefined;
         };
 
         // Mapping set and delete
         this.set = function (key, value) {
-            var isAdd = (!this.has(key));
+            var isAdd = (!this._has(key));
             this._values[key] = value;
             this._keys.push(key);
             if (isAdd) {
@@ -335,7 +335,7 @@ window[COREMODELNS] = (function ($, core) {
         // convenience setter: add() allows getting key from value:
         this.add = function (item) {
             var uid = core.id.getUID(item);
-            if (this.has(uid)) {
+            if (this._has(uid)) {
                 throw new Error('Container already has item with uid ' + uid);
             }
             this.set(uid, item);
@@ -343,9 +343,13 @@ window[COREMODELNS] = (function ($, core) {
 
         // containment and size:
 
+        this._has = function (key) {
+            return (this._keys.indexOf(key) < 0) ? false : true;
+        };
+
         this.has = function (key) {
             key = this.order._normalize(key);
-            return (this._keys.indexOf(key) < 0) ? false : true;
+            return this._has(key);
         };
 
         this.size = function () {

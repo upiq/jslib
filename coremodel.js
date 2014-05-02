@@ -95,7 +95,7 @@ self[COREMODELNS] = (function ($, core) {
 
     }(core.klass || {}));
 
-    core.Item = function Item(id, context, target) {
+    core.Item = function Item(kwargs) {
 
         this.defaultNS = 'item';
 
@@ -136,11 +136,12 @@ self[COREMODELNS] = (function ($, core) {
             }
         );
 
-        this.init = function (id, context, target) {
-            this.id = id || core.id.uuid4();
+        this.init = function (kwargs) {
+            var args = kwargs || {};
+            this.id = args.id || core.id.uuid4();
+            this.context = args.context;
+            this.target = args.target;
             this.observers = [];
-            this.context = context;
-            this.target = target;
         };
 
         // pre/post sync hooks for use by subclases:
@@ -162,7 +163,7 @@ self[COREMODELNS] = (function ($, core) {
             }
         };
 
-        this.init(id, context, target);
+        this.init(kwargs);
     };
 
     /**
@@ -279,14 +280,8 @@ self[COREMODELNS] = (function ($, core) {
                     this._keys.push(pair[0]);
                 }, this);
             }
-            core.Container.prototype.init.apply(
-                this,
-                [
-                    uid,
-                    args.context,
-                    args.target
-                ]
-            ); // superclass init
+            // superclass init, pass args:
+            core.Container.prototype.init.apply(this, [args]);
         };
 
         // basic hooks, likely overridden by subclasses, which should

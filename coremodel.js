@@ -270,7 +270,6 @@ window[COREMODELNS] = (function ($, core) {
 
         this.init = function (kwargs) {
             var args = kwargs || {},
-                uid = args.id || core.id.assignUID(this),
                 iterable = args.iterable || [];
             this._keys = [];
             this._values = {};

@@ -29,9 +29,15 @@ uu.queryschema = (function ($, ns, uu, core, global) {
             wrapper = function (data) {
                 callback.call(this, data);
                 ns.apiCallCache[url] = data;
-            };
-        config.success = wrapper;
+            },
+            context = config.context,
+            cachedResult;
         if (!url || config.type === 'POST') return;  // uncachable
+        cachedResult = ns.apiCallCache[url];
+        if (cachedResult) {
+            return (context) ? callback.call(context, cachedResult) : callback(cachedResult);
+        }
+        config.success = wrapper;
         $.ajax(config);
     };
 
@@ -52,8 +58,8 @@ uu.queryschema = (function ($, ns, uu, core, global) {
         // is field a Choice or collection of multiple Choice?
         this.isChoice = function () {
             return (
-                this.fieldtype === 'Choice' |
-                this.valuetype === 'Choice' ||
+                this.fieldtype === 'Choice' ||
+                this.value_type === 'Choice' ||
                 this.fieldtype === 'Bool'
             );
         };
@@ -62,7 +68,7 @@ uu.queryschema = (function ($, ns, uu, core, global) {
     };
 
     /**
-     * Schema: ordered mapping of field names to Field objects
+     * Schema: mapping of field names to Field objects, may preserve order
      */
     ns.Schema = function Schema(data) {
 
@@ -73,8 +79,8 @@ uu.queryschema = (function ($, ns, uu, core, global) {
                 pairs = Object.keys(data).map(function (name) {
                     return [name, new ns.Field(name, data[name])];
                 }, this);
-             }
-            ns.Schema.prototype.init.call(this, pairs);
+            }
+            ns.Schema.prototype.init.call(this, {iterable: pairs});
         };
 
         this.init(data);

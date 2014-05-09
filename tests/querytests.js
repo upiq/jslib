@@ -11,6 +11,7 @@
         deepEqual = qunit.deepEqual,
         strictEqual = qunit.strictEqual,
         mockSchema = {},
+        comparatorMocks={},
         ns = {};  // internal namespace
 
 
@@ -192,6 +193,25 @@
       }
     };
 
+    // comparatoryMocks keys are URL suffixes, which will be prepended
+    // by the value of uu.queryschema.comparatorBase, then an ampersand
+    comparatorMocks['byindex=field&choice=1'] = [
+        ["Any", "* includes any of"],
+        ["Eq", "= is equal to"],
+        ["NotEq", "\u2260 is not"]
+    ];
+
+    comparatorMocks['byindex=keyword&choice=1'] = [
+        ["All", "\u2286 contains all of"],
+        ["Any", "* includes any of"],
+        ["DoesNotContain", "\u2209 does not contain"]
+    ];
+
+    comparatorMocks['byindex=text+field'] = [
+        ["Contains", "\u2208 contains"],
+        ["DoesNotContain", "\u2209 does not contain"]
+    ];
+
     ns.tests = {};
 
     ns.tests['Meta tests'] = {
@@ -214,10 +234,18 @@
     ns.tests['schema and comparator tests'] = function () {
         var schema, comparators, tests,
             callCache = uu.queryschema.apiCallCache,
-            cAjax = uu.queryschema.cAjax;
+            cAjax = uu.queryschema.cAjax,
+            comparatorsBase = uu.queryschema.comparatorsBase + '&';
 
-        // set up ajax mocks by pre-filling the cache:
+        // set up ajax mocks by pre-filling the cache (schema):
         callCache[uu.queryschema.schemaURL()] = mockSchema;
+
+        // likewise for comparator result mocks:
+        Object.keys(comparatorMocks).forEach(function (k) {
+            var url = comparatorsBase + k,
+                result = comparatorMocks[k];
+            callCache[url] = result;
+        }, this);
 
         tests = {
             'test schema ajax mock' : function () {
@@ -226,7 +254,6 @@
                     success: function (data) {
                         test('schema ajax mock result', function () {
                             deepEqual(data, mockSchema, 'mock data fetched');
-
                         });
                     }
                 });
@@ -248,6 +275,54 @@
                     }
                 }, this);
                 ok(1===1);
+            },
+            'test field comparators': function () {
+                var schema = new uu.queryschema.Schema(mockSchema),
+                    comparators = new uu.queryschema.Comparators(schema),
+                    callback = function (field, data) {
+                        if (field.fieldtype === 'List') {
+                            test('applied callback: keyword index', function () {
+                                var k = 'byindex=keyword&choice=1';
+                                deepEqual(
+                                    data,
+                                    comparatorMocks[k],
+                                    'Multiple choice / List / keyword compare'
+                                    );
+                            });
+                        }
+                        if (['Choice', 'Bool'].indexOf(field.fieldtype) !== -1) {
+                            test('applied callback: field index', function () {
+                                var k = 'byindex=field&choice=1';
+                                deepEqual(
+                                    data,
+                                    comparatorMocks[k],
+                                    'Single choice field index compare'
+                                    );
+                            });
+                        }
+                        if (field.fieldtype === 'TextLine') {
+                            test('applied callback: text index', function () {
+                                var k = 'byindex=text+field';
+                                deepEqual(
+                                    data,
+                                    comparatorMocks[k],
+                                    'Text field index compare'
+                                    );
+                            });
+                        }
+                    };
+                strictEqual(schema, comparators.schema, 'bound schema');
+                schema.keys().forEach(function (k) {
+                    var field = schema.get(k);
+                    if (['Choice', 'Bool', 'List'].indexOf(field.fieldtype) !== -1) {
+                        comparators.applyComparators(field, callback);
+                        comparators.applyComparators(k, callback);  // by fieldname
+                    }
+                    if (field.fieldtype === 'TextLine') {
+                        comparators.applyComparators(field, callback);
+                    }
+                }, this);
+
             }
         };
 

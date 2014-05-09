@@ -17,8 +17,11 @@ var uu = uu || {};
 uu.queryschema = (function ($, ns, uu, core, global) {
 
     ns.schemaURL = function () {
-        return $('base').attr('href') + '/@@searchapi/fields';
+        return ($('base').attr('href') || '') + '/@@searchapi/fields';
     };
+
+    ns.comparatorsBase = ($('base').attr('href') || '') +
+        '/@@searchapi/comparators?symbols=1';
 
     /**
      * cAjax(): cached ajax GET requests
@@ -92,9 +95,7 @@ uu.queryschema = (function ($, ns, uu, core, global) {
      *              to a callback for a field via applyComparators.
      */
     ns.Comparators = function Comparators(schema) {
-
-        var apiBase = $('base').attr('href') +
-            '/@@searchapi/comparators?symbols=1';
+        var apiBase = ns.comparatorsBase;
 
         this.init = function (schema) {
             this.schema = schema;

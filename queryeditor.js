@@ -6,7 +6,7 @@
 /*jshint browser: true, nomen: false, eqnull: true, es5:true, trailing:true,
          undef:true
  */
-/*global jQuery, console, QUnit, COREMODELNS, window */
+/*global jQuery, console, QUnit, COREMODELNS, window, alert */
 
 
 // org namespace:
@@ -26,22 +26,22 @@ uu.queryschema = (function ($, ns, uu, core, global) {
     /**
      * cAjax(): cached ajax GET requests
      */
-    ns.cAjax = function (config) {
-        var url = config.url,
-            callback = config.success,
+    ns.cAjax = function (options) {
+        var url = options.url,
+            callback = options.success,
             wrapper = function (data) {
                 callback.call(this, data);
                 ns.apiCallCache[url] = data;
             },
-            context = config.context,
+            context = options.context,
             cachedResult;
-        if (!url || config.type === 'POST') return;  // uncachable
+        if (!url || options.type === 'POST') return;  // uncachable
         cachedResult = ns.apiCallCache[url];
         if (cachedResult) {
             return (context) ? callback.call(context, cachedResult) : callback(cachedResult);
         }
-        config.success = wrapper;
-        $.ajax(config);
+        options.success = wrapper;
+        $.ajax(options);
     };
 
     // module-scoped data:
@@ -141,6 +141,50 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
     var cAjax = uu.queryschema.cAjax,
         schemaURL = uu.queryschema.schemaURL;
 
+    /**
+     * schema acquisition functions, used for property descriptor on
+     * the containment chain of objects, such that contained FieldQuery,
+     * RecordFilter, and FilterGroup items could get the schema from
+     * the containing ComposedQuery object:
+     */
+
+    function acquire_schema(context) {
+        var parent = context.context;
+        if (parent) {
+            return context._schema || context.context.schema;
+        }
+        return context._schema;  // end of chain, may be undefined or null
+    }
+
+    function initSchemaContext(context) {
+        Object.defineProperty(
+            context,
+            'schema',
+            {
+                get: function () {
+                    return acquire_schema(this);
+                }
+            }
+        );
+    }
+
+    // invariant for component construction options:
+    function validateOptions(options) {
+        // no empty options, given other constraints:
+        if (!options) {
+            throw new Error('no provided construction options');
+        }
+        // EVERY component must be constructed with either a schema or
+        // a context that can provide the schema.
+        if (!(options.schema instanceof uu.queryschema.Schema)) {
+            if (!options.context) {
+                throw new Error(
+                    'Construction must be provided either schema or context.'
+                    );
+            }
+        }
+    }
+
     // unloaded singleton default values:
     ns.schema = null;           // will be ns.Schema instance
     ns.comparators = null;      // later ns.Comparators instance
@@ -153,35 +197,85 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
 
     ns.NOVALUE = $(ns.snippets.NOVALUE).attr('value');
 
+    // warn function, can be overridden if needed:
+    ns.warn = function warn(message) {
+        alert(message);
+    };
+
     /**
      * FieldQuery:  item contains info for one basic query of a single
      *              field.
      */
-    ns.FieldQuery = function FieldQuery(kwargs) {
+    ns.FieldQuery = function FieldQuery(options) {
+
+        initSchemaContext(this);
+
+        // normalize and validate field, return normalized value
+        this.validateField = function (v) {
+            if (typeof v === 'string') {
+                v = this.schema.get(v);  // fieldname -> field
+            }
+            if (!(v instanceof uu.queryschema.field)) {
+                throw new TypeError('Invalid field type');
+            }
+            if (this.schema.keys().indexOf(v.name) === -1) {
+                throw new Error('improper field, not in schema');
+            }
+            if (this.context.fieldnameInUse(v.name)) {
+                if (this._field && this._field.name !== v.name) {
+                    // fieldname is in use, but not by this FieldQuery:
+                    // treat as duplicate/conflict, warn and return existing:
+                    ns.warn('Field already in use in this filter: ' + v.title);
+                    return this._field;
+                }
+            }
+            return v;
+        };
 
         Object.defineProperties(
             this,
             {
                 field: {
-                    get: function () {},
-                    set: function (v) {},
+                    get: function () {
+                        return this._field;
+                    },
+                    set: function (v) {
+                        v = this.validateField(v);  // validate, normalize
+                        this._field = v;
+                        this.sync();
+                    },
                     enumerable: true
                 },
                 comparator: {
-                    get: function () {},
-                    set: function (v) {},
+                    get: function () {
+                        return this._comparator;
+                    },
+                    set: function (v) {
+                        this._comparator = v;
+                        this.sync();
+                    },
                     enumerable: true
                 },
                 value: {
-                    get: function () {},
-                    set: function (v) {},
+                    get: function () {
+                        return this._value;
+                    },
+                    set: function (v) {
+                        this._value = v;
+                        this.sync();
+                    },
                     enumerable: true
                 }
             }
         );
 
-        this.init = function (kwargs) {
-            ns.FieldQuery.prototype.init.apply(this, [kwargs]);
+        this.init = function (options) {
+            validateOptions(options);
+            ns.FieldQuery.prototype.init.apply(this, [options]);
+            this._field = options.field || null;
+            this._comparator = options.comparator || null;
+            this._value = options.value || null;
+            this._schema = options.schema || undefined;
         };
 
         // hooks to sync dependent components
@@ -189,17 +283,21 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
         this.postSync = function (observed) {};
         this.syncTarget = function (observed) {};
 
-        this.init(kwargs);
+        this.init(options);
     };
     core.klass.subclasses(ns.FieldQuery, core.Item);
 
     /**
      * RecordFilter: Container of ordered FieldQuery objects
      */
-    ns.RecordFilter = function (kwargs) {
+    ns.RecordFilter = function (options) {
 
-        this.init = function (kwargs) {
-            ns.RecordFilter.prototype.init.apply(this, [kwargs]);
+        initSchemaContext(this);
+
+        this.init = function (options) {
+            validateOptions(options);
+            ns.RecordFilter.prototype.init.apply(this, [options]);
+            this._schema = options.schema || undefined;
         };
 
         // hooks to sync dependent components
@@ -220,36 +318,55 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             this.sync();
         };
 
+        // factory methods for ns.FieldQuery objects contained:
+        this.addQuery = function (options) {
+            var query = new ns.FieldQuery(options);
+        };
 
-        this.init(kwargs);
+        // de-dupe checker, used by FieldQuery validation
+        this.fieldnameInUse = function (name) {
+            var qField = function (q) { return (q.field && q.field.name); },
+                inUse = this.values().map(qField);
+            return (inUse.indexOf(name) !== -1);
+        };
+
+        this.init(options);
     };
     core.klass.subclasses(ns.RecordFilter, core.Container);
 
     /**
      * FilterGroup: Container of ordered RecordFilter objects
      */
-    ns.FilterGroup = function (kwargs) {
+    ns.FilterGroup = function (options) {
 
-        this.init = function (kwargs) {
-            ns.FilterGroup.prototype.init.apply(this, [kwargs]);
+        initSchemaContext(this);
+
+        this.init = function (options) {
+            validateOptions(options);
+            ns.FilterGroup.prototype.init.apply(this, [options]);
+            this._schema = options.schema || undefined;
         };
 
-        this.init(kwargs);
+        this.init(options);
     };
     core.klass.subclasses(ns.FilterGroup, core.Container);
 
     /**
-     * CompositeQuery: Container of ordered FilterGroup objects
+     * ComposedQuery: Container of ordered FilterGroup objects
      */
-    ns.CompositeQuery = function (kwargs) {
+    ns.ComposedQuery = function (options) {
 
-        this.init = function (kwargs) {
-            ns.CompositeQuery.prototype.init.apply(this, [kwargs]);
+        initSchemaContext(this);
+
+        this.init = function (options) {
+            validateOptions(options);
+            ns.ComposedQuery.prototype.init.apply(this, [options]);
+            this._schema = options.schema || undefined;
         };
 
-        this.init(kwargs);
+        this.init(options);
     };
-    core.klass.subclasses(ns.CompositeQuery, core.Container);
+    core.klass.subclasses(ns.ComposedQuery, core.Container);
 
 
     // application initialization

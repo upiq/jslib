@@ -329,6 +329,62 @@
         return tests;
     };
 
+
+
+/* 
+
+    TEST CONSTRUCTION: 'short chain schema context'
+    
+    RecordFilter <#>--- FieldQuery
+    
+    ---
+    
+    1. Short chain construction errors:
+    
+        a. attempt to construct a RecordFilter without options throws error.
+        b. attempt to construct a RecordFilter with empty options throws error.
+    
+    2. Short chain schema context:
+    
+        a. Construct RecordFilter with schema passed in options.
+            * No errors on doing this
+            * assert that rfilter._schema instanceof uu.queryschema.Schema
+            * strictEqual(rfilter._schema, rfilter.schema, 'Schema accessor')
+        
+        b. Construct a FieldQuery without a schema, but with a passed context
+            in the options passed to construction.
+            * strictEqual(query.schema, rfilter.schema, 'acquired schema')
+            * ok(!query._schema, 'no embedded schema, schema is acquired only')
+
+    3. Validation tests:
+    
+        a. Create a FieldQuery with an explicit schema...
+        
+            * Attempt to set query.field with an null value should succeed.
+            * Attempt to set query.field with any object that is not null or
+                an instance of Field should throw an error.
+            * Attempt to set query.field with a field not in schema should 
+                throw an error.
+            * Attempt to set valid field works, and valiation function
+                returns expected field.
+            * Attempt to set a valid field by FIELDNAME also works likewise.
+
+        b. Duplication:
+            
+            * Create RecordFilter with two FieldQuery objects contained.
+                * rfilter manages schema
+            * query1 set field.
+            * Attempt to set field already managed should warn
+                * monkey patch the ns.warn?
+            * Attempt to set field already managed should keep existing
+               field value on change from non-null value.
+
+*/
+
+
+
+
+
     $(document).ready(function () {
         var key;
         qunit.config.reorder = false;

@@ -384,7 +384,51 @@
 
         tests = {
             'fieldquery with explicit schema': function () {
-                ok(1===1); // TODO implement, remove boilerplate
+                var schema = new uu.queryschema.Schema(mockSchema),
+                    allowedField = schema.values()[0],
+                    query = new uu.queryeditor.FieldQuery({
+                        schema: schema
+                    }),
+                    orphanField = new uu.queryschema.Field('orphan', {
+                        title: 'Orphaned field, not in any schema',
+                        fieldtype: 'Choice'
+                    });
+                // Attempt to set query.field with an null value should succeed
+                query.field = null;
+                strictEqual(query.field, null, 'null field value');
+                // Attempt to set query.field with any object that is not null
+                //   of an instance of Field should throw an error:
+                throws(
+                    function setInvalidFieldType() {
+                        query.field = {};
+                    },
+                    TypeError,
+                    'Invalid field type'
+                    );
+                // Attempt to set query.field with a field not in schema should
+                //   throw an error.
+                throws(
+                    function setOrphanedField() {
+                        query.field = orphanField;
+                    },
+                    Error,
+                    'Field not in schema throws error'
+                    );
+                // Attempt to set valid field works, and valiation function
+                //   returns expected field
+                query.field = allowedField;
+                strictEqual(
+                    query.validateField(allowedField),
+                    allowedField,
+                    'validate/normalize returns field value'
+                );
+                // Attempt to set by fieldname is appropriately normalized
+                query.field = allowedField.name;
+                strictEqual(
+                    query.field,
+                    allowedField,
+                    'validate/normalize returns field value'
+                );
             },
             'duplication check': function () {
                 ok(1===1); // TODO implement, remove boilerplate

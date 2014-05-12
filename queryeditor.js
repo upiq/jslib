@@ -212,16 +212,19 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
 
         // normalize and validate field, return normalized value
         this.validateField = function (v) {
+            if (v === null) {
+                return v;
+            }
             if (typeof v === 'string') {
                 v = this.schema.get(v);  // fieldname -> field
             }
-            if (!(v instanceof uu.queryschema.field)) {
+            if (!(v instanceof uu.queryschema.Field)) {
                 throw new TypeError('Invalid field type');
             }
             if (this.schema.keys().indexOf(v.name) === -1) {
                 throw new Error('improper field, not in schema');
             }
-            if (this.context.fieldnameInUse(v.name)) {
+            if (this.context && this.context.fieldnameInUse(v.name)) {
                 if (this._field && this._field.name !== v.name) {
                     // fieldname is in use, but not by this FieldQuery:
                     // treat as duplicate/conflict, warn and return existing:

@@ -285,6 +285,22 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             this._schema = options.schema || undefined;
         };
 
+        this.completionState = function () {
+            var field = this._field,
+                comparator = this._comparator,
+                value = this._value;
+            if (!field && !comparator && !value) {
+                return null;   // EMPTY, nothing defined yet
+            }
+            if (field && comparator && value) {
+                if (value instanceof Array && value.length === 0) {
+                    return false;  // empty selection is incomplete
+                }
+                return true;
+            }
+            return false;  // incomplete, but not empty
+        };
+
         // hooks to sync dependent components
         this.preSync = function (observed) {};
         this.postSync = function (observed) {};

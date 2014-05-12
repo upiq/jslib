@@ -232,7 +232,7 @@
         }
     };
 
-    ns.tests['schema and comparator tests'] = function () {
+    ns.tests['schema and comparator tests'] = function (modname) {
         var schema, comparators, tests,
             callCache = uu.queryschema.apiCallCache,
             cAjax = uu.queryschema.cAjax,
@@ -253,6 +253,7 @@
                 var result = cAjax({
                     url: uu.queryschema.schemaURL(),
                     success: function (data) {
+                        module(modname);
                         test('schema ajax mock result', function () {
                             deepEqual(data, mockSchema, 'mock data fetched');
                         });
@@ -282,6 +283,7 @@
                     comparators = new uu.queryschema.Comparators(schema),
                     callback = function (field, data) {
                         if (field.fieldtype === 'List') {
+                            module(modname);
                             test('applied callback: keyword index', function () {
                                 var k = 'byindex=keyword&choice=1';
                                 deepEqual(
@@ -292,6 +294,7 @@
                             });
                         }
                         if (['Choice', 'Bool'].indexOf(field.fieldtype) !== -1) {
+                            module(modname);
                             test('applied callback: field index', function () {
                                 var k = 'byindex=field&choice=1';
                                 deepEqual(
@@ -302,6 +305,7 @@
                             });
                         }
                         if (field.fieldtype === 'TextLine') {
+                            module(modname);
                             test('applied callback: text index', function () {
                                 var k = 'byindex=text+field';
                                 deepEqual(
@@ -331,7 +335,7 @@
     };
 
 
-    ns.tests['schema context'] = function () {
+    ns.tests['schema context'] = function (modname) {
         var tests;
 
         tests = {
@@ -400,7 +404,7 @@
     };
 
 
-    ns.tests['validation tests'] = function () {
+    ns.tests['validation tests'] = function (modname) {
         var tests;
 
         tests = {
@@ -493,18 +497,39 @@
         return tests;
     };
 
+    ns.tests['FieldQuery state'] = function (modname) {
+        return {
+            'completion state': function () {
+                var schema = new uu.queryschema.Schema(mockSchema),
+                    field = schema.get('asthma_diagnosis_documented'),
+                    query = new uu.queryeditor.FieldQuery({
+                        schema: schema
+                    });
+                strictEqual(query.completionState(), null, 'EMPTY');
+                query.field = field;
+                strictEqual(query.completionState(), false, 'Incomplete');
+                query.comparator = 'Any';
+                strictEqual(query.completionState(), false, 'Incomplete');
+                query.value = ['Yes', 'No'];  // what fun!
+                strictEqual(query.completionState(), true, 'Complete');
+                query.value = [];  // set empty
+                strictEqual(query.completionState(), false, 'Empty value');
+            }
+        };
+    };
+
 
     $(document).ready(function () {
         var key;
         qunit.config.reorder = false;
         Object.keys(ns.tests).forEach(function (modname) {
             var suite = ns.tests[modname];
-            module(modname);
             if (typeof suite === 'function') {
-                suite = suite();
+                suite = suite(modname);
             }
             Object.keys(suite).forEach(function (k) {
-               var fn = suite[k];
+                var fn = suite[k];
+                module(modname);
                 test(k, fn);
             });
         });

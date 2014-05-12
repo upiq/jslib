@@ -276,7 +276,7 @@
         }
     };
 
-    ns.tests['Container ordering adapter tests'] = function () {
+    ns.tests['Container ordering adapter tests'] = function (modname) {
 
         // common fixures are shared state (closure) for this module:
         var item1 = new core.Item(),
@@ -413,7 +413,7 @@
         return tests;
     };
 
-    ns.tests['Container tests'] = function () {
+    ns.tests['Container tests'] = function (modname) {
 
         var item1 = new core.Item(),
             item2 = new core.Item(),
@@ -607,12 +607,12 @@
         qunit.config.reorder = false;
         Object.keys(ns.tests).forEach(function (modname) {
             var suite = ns.tests[modname];
-            module(modname);
             if (typeof suite === 'function') {
-                suite = suite();
+                suite = suite(modname);
             }
             Object.keys(suite).forEach(function (k) {
-               var fn = suite[k];
+                var fn = suite[k];
+                module(modname);
                 test(k, fn);
             });
         });

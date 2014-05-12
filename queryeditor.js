@@ -197,9 +197,12 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
 
     ns.NOVALUE = $(ns.snippets.NOVALUE).attr('value');
 
+    ns.warnfn = null;
+
     // warn function, can be overridden if needed:
     ns.warn = function warn(message) {
-        alert(message);
+        var fn = ns.warnfn || alert;
+        fn(message);
     };
 
     /**
@@ -212,6 +215,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
 
         // normalize and validate field, return normalized value
         this.validateField = function (v) {
+            var existing = this._field;
             if (v === null) {
                 return v;
             }
@@ -225,7 +229,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                 throw new Error('improper field, not in schema');
             }
             if (this.context && this.context.fieldnameInUse(v.name)) {
-                if (this._field && this._field.name !== v.name) {
+                if (!existing || (existing && existing.name !== v.name)) {
                     // fieldname is in use, but not by this FieldQuery:
                     // treat as duplicate/conflict, warn and return existing:
                     ns.warn('Field already in use in this filter: ' + v.title);

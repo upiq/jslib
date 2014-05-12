@@ -33,12 +33,12 @@ uu.queryschema = (function ($, ns, uu, core, global) {
                 callback.call(this, data);
                 ns.apiCallCache[url] = data;
             },
-            context = options.context,
+            context = options.context || options,
             cachedResult;
         if (!url || options.type === 'POST') return;  // uncachable
         cachedResult = ns.apiCallCache[url];
         if (cachedResult) {
-            return (context) ? callback.call(context, cachedResult) : callback(cachedResult);
+            return callback.call(context, cachedResult);
         }
         options.success = wrapper;
         $.ajax(options);

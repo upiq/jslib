@@ -331,7 +331,7 @@
     };
 
 
-    ns.tests['short chain schema context'] = function () {
+    ns.tests['schema context'] = function () {
         var tests;
 
         tests = {
@@ -372,6 +372,27 @@
                     });
                 strictEqual(query.schema, rfilter.schema, 'acquired schema');
                 ok(!query._schema, 'schema is acquired only');
+            },
+            'Complete chain of schema context': function () {
+                var schema = new uu.queryschema.Schema(mockSchema),
+                    composed = new uu.queryeditor.ComposedQuery({
+                        schema: schema
+                    }),
+                    group = new uu.queryeditor.FilterGroup({
+                        context: composed
+                    }),
+                    rfilter = new uu.queryeditor.RecordFilter({
+                        context: group
+                    }),
+                    query = new uu.queryeditor.FieldQuery({
+                        context: rfilter
+                    });
+                strictEqual(query.schema, rfilter.schema, 'acquired schema');
+                strictEqual(query.schema, group.schema, 'acquired schema');
+                strictEqual(query.schema, composed.schema, 'acquired schema');
+                ok(!query._schema, 'query schema is acquired only');
+                ok(!rfilter._schema, 'filter schema is acquired only');
+                ok(!group._schema, 'group schema is acquired only');
             }
         };
 
@@ -431,65 +452,46 @@
                 );
             },
             'duplication check': function () {
-                ok(1===1); // TODO implement, remove boilerplate
+                var schema = new uu.queryschema.Schema(mockSchema),
+                    rfilter = new uu.queryeditor.RecordFilter({
+                        schema: schema
+                    }),
+                    query1 = new uu.queryeditor.FieldQuery({
+                        context: rfilter
+                    }),
+                    query2 = new uu.queryeditor.FieldQuery({
+                        context: rfilter
+                    }),
+                    field = schema.values()[0],
+                    warn_msg;
+                // set up uu.queryeditor.warnfn with special callback
+                uu.queryeditor.warnfn = function (message) {
+                    warn_msg = message;
+                };
+                query1.field = null;
+                query2.field = null;
+                rfilter.add(query1);
+                rfilter.add(query2);
+                strictEqual(query1.context, rfilter, 'context');
+                strictEqual(query2.context, rfilter, 'context');
+                query1.field = field;  // ok
+                strictEqual(warn_msg, undefined);
+                // Attempt to set a field in-use in another query will WARN:
+                query2.field = field;  // in use!!
+                equal(warn_msg.slice(0,20), 'Field already in use', 'warn');
+                warn_msg = null;
+                // Attempt to set field already managed should keep existing
+                // field value on set from non-null value.
+                query1.field = field;  // ok to set same value again
+                strictEqual(warn_msg, null, 'no warning on valid set');
+                strictEqual(query1.field, field, 'set twice');
+                // revert monkey patch for warning plug:
+                uu.queryeditor.warnfn = null;
             }
         };
 
         return tests;
     };
-
-/* 
-
-    TEST CONSTRUCTION: 'short chain schema context'
-    
-    RecordFilter <#>--- FieldQuery
-    
-    ---
-    
-    1. Short chain construction errors:
-    
-        a. attempt to construct a RecordFilter without options throws error.
-        b. attempt to construct a RecordFilter with empty options throws error.
-    
-    2. Short chain schema context:
-    
-        a. Construct RecordFilter with schema passed in options.
-            * No errors on doing this
-            * assert that rfilter._schema instanceof uu.queryschema.Schema
-            * strictEqual(rfilter._schema, rfilter.schema, 'Schema accessor')
-        
-        b. Construct a FieldQuery without a schema, but with a passed context
-            in the options passed to construction.
-            * strictEqual(query.schema, rfilter.schema, 'acquired schema')
-            * ok(!query._schema, 'no embedded schema, schema is acquired only')
-
-    3. Validation tests:
-    
-        a. Create a FieldQuery with an explicit schema...
-        
-            * Attempt to set query.field with an null value should succeed.
-            * Attempt to set query.field with any object that is not null or
-                an instance of Field should throw an error.
-            * Attempt to set query.field with a field not in schema should 
-                throw an error.
-            * Attempt to set valid field works, and valiation function
-                returns expected field.
-            * Attempt to set a valid field by FIELDNAME also works likewise.
-
-        b. Duplication:
-            
-            * Create RecordFilter with two FieldQuery objects contained.
-                * rfilter manages schema
-            * query1 set field.
-            * Attempt to set field already managed should warn
-                * monkey patch the ns.warn?
-            * Attempt to set field already managed should keep existing
-               field value on change from non-null value.
-
-*/
-
-
-
 
 
     $(document).ready(function () {

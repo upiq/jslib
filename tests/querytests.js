@@ -10,6 +10,7 @@
         equal = qunit.equal,
         deepEqual = qunit.deepEqual,
         strictEqual = qunit.strictEqual,
+        throws = qunit.throws,
         mockSchema = {},
         comparatorMocks={},
         ns = {};  // internal namespace
@@ -334,14 +335,43 @@
         var tests;
 
         tests = {
-            'construct RecordFilter: no  options throws error': function () {
-                ok(1===1); // TODO implement, remove boilerplate
+            'construct RecordFilter: options errors': function () {
+                throws(
+                    function constructWithoutOptions() {
+                        var rfilter = new uu.queryeditor.RecordFilter();
+                    },
+                    Error,
+                    'thows Error on no construction options'
+                    );
+                throws(
+                    function constructWithEmptyOptions() {
+                        var rfilter = new uu.queryeditor.RecordFilter({});
+                    },
+                    Error,
+                    'thows Error on empty construction options'
+                    );
             },
-            'construct RecordFilter: empty options throws error': function () {
-                ok(1===1); // TODO implement, remove boilerplate
+            'RecordFilter schema, no chain': function () {
+                var schema = new uu.queryschema.Schema(mockSchema),
+                    rfilter = new uu.queryeditor.RecordFilter({
+                        schema: schema
+                    });
+                ok(
+                    rfilter._schema instanceof uu.queryschema.Schema,
+                    'Schema type'
+                );
+                strictEqual(rfilter._schema, rfilter.schema, 'Schema accessor');
             },
-            'short chain schema context acquisition': function () {
-                ok(1===1); // TODO implement, remove boilerplate
+            'RecordFilter schema, short chain': function () {
+                var schema = new uu.queryschema.Schema(mockSchema),
+                    rfilter = new uu.queryeditor.RecordFilter({
+                        schema: schema
+                    }),
+                    query = new uu.queryeditor.FieldQuery({
+                        context: rfilter
+                    });
+                strictEqual(query.schema, rfilter.schema, 'acquired schema');
+                ok(!query._schema, 'schema is acquired only');
             }
         };
 

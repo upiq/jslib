@@ -330,6 +330,39 @@
     };
 
 
+    ns.tests['short chain schema context'] = function () {
+        var tests;
+
+        tests = {
+            'construct RecordFilter: no  options throws error': function () {
+                ok(1===1); // TODO implement, remove boilerplate
+            },
+            'construct RecordFilter: empty options throws error': function () {
+                ok(1===1); // TODO implement, remove boilerplate
+            },
+            'short chain schema context acquisition': function () {
+                ok(1===1); // TODO implement, remove boilerplate
+            }
+        };
+
+        return tests;
+    };
+
+
+    ns.tests['validation tests'] = function () {
+        var tests;
+
+        tests = {
+            'fieldquery with explicit schema': function () {
+                ok(1===1); // TODO implement, remove boilerplate
+            },
+            'duplication check': function () {
+                ok(1===1); // TODO implement, remove boilerplate
+            }
+        };
+
+        return tests;
+    };
 
 /* 
 

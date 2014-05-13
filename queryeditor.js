@@ -212,13 +212,28 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
         return context._schema;  // end of chain, may be undefined or null
     }
 
+    function acquire_comparators(context) {
+        var parent = context.context;
+        if (parent) {
+            return context._comparators || parent.comparators;
+        }
+        return context._comparators;  // end of chain, may be undefined or null
+    }
+
+    // makes acquisition possible on schema, comparators properties:
     function initSchemaContext(context) {
-        Object.defineProperty(
+        Object.defineProperties(
             context,
-            'schema',
             {
-                get: function () {
-                    return acquire_schema(this);
+                'schema': {
+                    get: function () {
+                        return acquire_schema(this);
+                    }
+                },
+                'comparators': {
+                    get: function () {
+                        return acquire_comparators(this);
+                    }
                 }
             }
         );
@@ -418,6 +433,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             this._comparator = options.comparator || null;
             this._value = options.value || null;
             this._schema = options.schema || undefined;
+            this._comparators = options.comparators || undefined;
             if (this._field && this.schema) {
                 if (!this.schema.has(this._field.name)) {
                     throw new Error('Field in ctor not in bound schema');
@@ -466,7 +482,6 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
         this.initFieldWidget = function () {
             var self = this,
                 schema = this.schema,
-                //fields = this.context.fields,
                 rowname = this.targetId,
                 row = $('#'+rowname, this.context.target),
                 cell = $('td.fieldspec', row),
@@ -500,11 +515,51 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             });
         };
 
+        // given comparators to include and selected name/title pair,
+        // initialize the dropdown for the row associated with this.
+        this.initComparatorWidget = function (vocab) {
+            var self = this,
+                rowname = this.targetId,
+                row = $('#'+rowname, this.context.target),
+                cell = $('td.compare', row),
+                selname = rowname + '-comparator',
+                select = $('<select />'),
+                selected = this.comparator;
+            select.attr('name', selname);
+            // clear any existing content of cell (empty)
+            cell.empty();
+            // append select to cell
+            select.appendTo(cell);
+            // no-value sentinel for dropdown:
+            $(ns.snippets.NOVALUE).appendTo(select);
+            select.val(ns.NOVALUE);
+            // options, given params
+            vocab.forEach(function (term) {
+                var option = $('<option />').appendTo(select),
+                    label = term.display_label();
+                option.attr('value', term.value).text(label);
+            });
+            if (selected) {
+                select.val(selected);
+            }
+            // event callback for change of selected comparator
+            select.change(function () {
+                self.comparator = select.val();
+            });
+        };
+
         // hooks to sync dependent components
         this.preSync = function (observed) {};
         this.postSync = function (observed) {};
         this.syncTarget = function (observed) {
+            var row = $(this.target),
+                compareCell = $('td.compare', row),
+                vocab;
             this.initFieldWidget();
+            if (this.field) {
+                vocab = this.comparators.vocabulary(this.field);
+                this.initComparatorWidget(vocab);
+            }
         };
 
         this.init(options);
@@ -577,6 +632,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             validateOptions(options);
             ns.RecordFilter.prototype.init.apply(this, [options]);
             this._schema = options.schema || undefined;
+            this._comparators = options.comparators || undefined;
             if ($(this.target).length) {
                 this.initView();
             }
@@ -671,6 +727,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             validateOptions(options);
             ns.FilterGroup.prototype.init.apply(this, [options]);
             this._schema = options.schema || undefined;
+            this._comparators = options.comparators || undefined;
         };
 
         this.init(options);
@@ -688,6 +745,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             validateOptions(options);
             ns.ComposedQuery.prototype.init.apply(this, [options]);
             this._schema = options.schema || undefined;
+            this._comparators = options.comparators || undefined;
         };
 
         this.init(options);
@@ -716,9 +774,11 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
     $(document).ready(function () {
         var target = $('<div>').appendTo($('div.editor')),
             schema = new uu.queryschema.Schema(uu.queryschema.mockSchema),
+            comparators = new uu.queryschema.Comparators(schema),
             rfilter = new uu.queryeditor.RecordFilter({
                 target: target,
-                schema: schema
+                schema: schema,
+                comparators: comparators
             });
 
         //ns.initUI();

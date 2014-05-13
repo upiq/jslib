@@ -16,6 +16,8 @@ var uu = uu || {};
 // queryschema module:
 uu.queryschema = (function ($, ns, uu, core, global) {
 
+    var c = {};
+
     ns.schemaURL = function () {
         return ($('base').attr('href') || '') + '/@@searchapi/fields';
     };
@@ -90,6 +92,55 @@ uu.queryschema = (function ($, ns, uu, core, global) {
     };
     core.klass.subclasses(ns.Schema, core.Container);
 
+    ns.comparators = c;
+
+    // TermInfo: vocabulary term for choices of Comparator, Value
+    ns.TermInfo = function (value, label, prefix) {
+
+        this.init = function (value, label, prefix) {
+            this.value = value || null;
+            this.label = label || null;
+            this.prefix = prefix || null;  // label prefix
+        };
+
+        this.display_label = function () {
+            if (typeof this.prefix === 'string') {
+                return this.prefix + ' ' + this.label;
+            }
+            return this.label;
+        };
+
+        this.init(value, label, prefix);
+    };
+
+    c.ALL = new ns.TermInfo('All', 'contains all of','\u2286');
+    c.ANY = new ns.TermInfo('Any', 'includes any of','*');
+    c.CONTAINS = new ns.TermInfo('Contains', 'contains','\u2208');
+    c.DOESNOTCONTAIN = new ns.TermInfo(
+        'DoesNotContain',
+        'does not contain',
+       '\u2209'
+        );
+    c.EQ = new ns.TermInfo('Eq', 'is equal to','=');
+    c.GE = new ns.TermInfo('Ge', 'is greater than or equal to','\u2264');
+    c.GT = new ns.TermInfo('Gt', 'is greater than','>');
+    c.INRANGE = new ns.TermInfo('InRange', 'is between','(\u2026)');
+    c.LE = new ns.TermInfo('Le', 'is less than or equal to','\u2265');
+    c.LT = new ns.TermInfo('Lt', 'is less than','<');
+    c.NOTEQ = new ns.TermInfo('NotEq', 'is not','\u2260');
+    c.NOTINRANGE = new ns.TermInfo('NotInRange', 'is not between','\u2209');
+
+    ns.COMPARATORS_BY_INDEX = {
+        'field': [
+            c.ANY, c.EQ, c.GE, c.GT, c.INRANGE, c.LE, c.LT, c.NOTEQ,
+            c.NOTINRANGE
+        ],
+        'text': [c.CONTAINS, c.DOESNOTCONTAIN],
+        'keyword': [c.ANY, c.ALL, c.DOESNOTCONTAIN]
+        };
+
+    ns.CHOICE_OMIT = [c.LT, c.LE, c.GT, c.GE, c.INRANGE, c.NOTINRANGE];
+
     /**
      * Comparators: global adapts schema, can apply comparator choices
      *              to a callback for a field via applyComparators.
@@ -106,25 +157,24 @@ uu.queryschema = (function ($, ns, uu, core, global) {
             return (typeof spec === 'string') ? this.schema.get(spec) : spec;
         };
 
-        // async get and apply callback to fetched comparators
-        this.applyComparators = function (fieldspec, callback) {
-            var field = this._field(fieldspec),
-                cachedResult = this._cache[field.name],
-                idxtypes = 'byindex=' + field.index_types.join('+'),
+        this.vocabulary = function (spec) {
+            var field = this._field(spec),
                 choice = field.isChoice(),
-                url = apiBase + '&' + idxtypes + (choice ? '&choice=1' : '');
-            if (cachedResult) {
-                return callback(field, cachedResult);
-            }
-            ns.cAjax({
-                url: url,
-                async: true,
-                context: this,
-                success: function (data) {
-                    this._cache[field.name] = data;
-                    callback(field, data);
-                }
-            });
+                omit = (choice) ? ns.CHOICE_OMIT : [],
+                idxTypes = field.index_types || ['field'],
+                comparators = [].concat.apply(
+                    [],
+                    idxTypes.map(
+                        function (idxtype) {
+                            return ns.COMPARATORS_BY_INDEX[idxtype];
+                        }
+                    )
+                ).filter(
+                    function (info) {
+                        return (omit.indexOf(info) === -1);
+                    }
+                );
+            return comparators;
         };
 
         this.init(schema);

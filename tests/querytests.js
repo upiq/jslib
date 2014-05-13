@@ -12,7 +12,6 @@
         strictEqual = qunit.strictEqual,
         throws = qunit.throws,
         mockSchema = {},
-        comparatorMocks={},
         ns = {};  // internal namespace
 
 
@@ -194,25 +193,6 @@
       }
     };
 
-    // comparatoryMocks keys are URL suffixes, which will be prepended
-    // by the value of uu.queryschema.comparatorBase, then an ampersand
-    comparatorMocks['byindex=field&choice=1'] = [
-        ["Any", "* includes any of"],
-        ["Eq", "= is equal to"],
-        ["NotEq", "\u2260 is not"]
-    ];
-
-    comparatorMocks['byindex=keyword&choice=1'] = [
-        ["All", "\u2286 contains all of"],
-        ["Any", "* includes any of"],
-        ["DoesNotContain", "\u2209 does not contain"]
-    ];
-
-    comparatorMocks['byindex=text+field'] = [
-        ["Contains", "\u2208 contains"],
-        ["DoesNotContain", "\u2209 does not contain"]
-    ];
-
     ns.tests = {};
 
     ns.tests['Meta tests'] = {
@@ -240,13 +220,6 @@
 
         // set up ajax mocks by pre-filling the cache (schema):
         callCache[uu.queryschema.schemaURL()] = mockSchema;
-
-        // likewise for comparator result mocks:
-        Object.keys(comparatorMocks).forEach(function (k) {
-            var url = comparatorsBase + k,
-                result = comparatorMocks[k];
-            callCache[url] = result;
-        }, this);
 
         tests = {
             'test schema ajax mock' : function () {
@@ -280,54 +253,34 @@
             },
             'test field comparators': function () {
                 var schema = new uu.queryschema.Schema(mockSchema),
-                    comparators = new uu.queryschema.Comparators(schema),
-                    callback = function (field, data) {
-                        if (field.fieldtype === 'List') {
-                            module(modname);
-                            test('applied callback: keyword index', function () {
-                                var k = 'byindex=keyword&choice=1';
-                                deepEqual(
-                                    data,
-                                    comparatorMocks[k],
-                                    'Multiple choice / List / keyword compare'
-                                    );
-                            });
-                        }
-                        if (['Choice', 'Bool'].indexOf(field.fieldtype) !== -1) {
-                            module(modname);
-                            test('applied callback: field index', function () {
-                                var k = 'byindex=field&choice=1';
-                                deepEqual(
-                                    data,
-                                    comparatorMocks[k],
-                                    'Single choice field index compare'
-                                    );
-                            });
-                        }
-                        if (field.fieldtype === 'TextLine') {
-                            module(modname);
-                            test('applied callback: text index', function () {
-                                var k = 'byindex=text+field';
-                                deepEqual(
-                                    data,
-                                    comparatorMocks[k],
-                                    'Text field index compare'
-                                    );
-                            });
-                        }
-                    };
+                    comparators = new uu.queryschema.Comparators(schema);
                 strictEqual(schema, comparators.schema, 'bound schema');
                 schema.keys().forEach(function (k) {
-                    var field = schema.get(k);
-                    if (['Choice', 'Bool', 'List'].indexOf(field.fieldtype) !== -1) {
-                        comparators.applyComparators(field, callback);
-                        comparators.applyComparators(k, callback);  // by fieldname
+                    var field = schema.get(k),
+                        c = uu.queryschema.comparators,
+                        choiceExpected = [c.ANY, c.EQ, c.NOTEQ],
+                        byIndex = uu.queryschema.COMPARATORS_BY_INDEX,
+                        textExpected = byIndex.text,
+                        fieldExpected = byIndex.field,
+                        vocab,
+                        i,
+                        term;
+                    if (['Choice', 'Bool'].indexOf(field.fieldtype) !== -1) {
+                        vocab = comparators.vocabulary(field);
+                        deepEqual(vocab, choiceExpected, 'Choice vocab');
                     }
                     if (field.fieldtype === 'TextLine') {
-                        comparators.applyComparators(field, callback);
+                        vocab = comparators.vocabulary(field);
+                        for (i=0; i<textExpected.length; i++) {
+                            term = textExpected[i];
+                            ok(vocab.indexOf(term) !== -1, 'term / text');
+                        }
+                        for (i=0; i<fieldExpected.length; i++) {
+                            term = fieldExpected[i];
+                            ok(vocab.indexOf(term) !== -1, 'term / field');
+                        }
                     }
                 }, this);
-
             }
         };
 

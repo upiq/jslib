@@ -251,6 +251,32 @@
                 }, this);
                 ok(1===1);
             },
+            'test choice field vocabulary': function (assert) {
+                var schema = new uu.queryschema.Schema(mockSchema),
+                    choiceFields = schema.values().filter(function (field) {
+                        return field.isChoice();
+                    });
+                choiceFields.forEach(function (field) {
+                    var vocab = field.vocabulary();
+                    vocab.forEach(function (term) {
+                        assert.ok(!!term.value, 'defined term value');
+                        assert.equal(term.value, term.label, 'label/val eq');
+                        assert.equal(
+                            term.display_label(),
+                            term.label,
+                            'display label'
+                        );
+                    }, this);
+                    // terms returned front for terms stored:
+                    assert.deepEqual(
+                        vocab.map(function (term) {
+                            return term.value;
+                        }),
+                        field._vocabulary,
+                        'storage eq'
+                        );
+                }, this);
+            },
             'test field comparators': function () {
                 var schema = new uu.queryschema.Schema(mockSchema),
                     comparators = new uu.queryschema.Comparators(schema);

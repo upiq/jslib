@@ -22,9 +22,6 @@ uu.queryschema = (function ($, ns, uu, core, global) {
         return ($('base').attr('href') || '') + '/@@searchapi/fields';
     };
 
-    ns.comparatorsBase = ($('base').attr('href') || '') +
-        '/@@searchapi/comparators?symbols=1';
-
     /**
      * cAjax(): cached ajax GET requests
      */
@@ -49,14 +46,34 @@ uu.queryschema = (function ($, ns, uu, core, global) {
     // module-scoped data:
     ns.apiCallCache = {};  // cache url to parsed JSON for GET requests
 
+    // TermInfo: vocabulary term for choices of Comparator, Value
+    ns.TermInfo = function (value, label, prefix) {
+
+        this.init = function (value, label, prefix) {
+            this.value = value || null;
+            this.label = label || this.value;
+            this.prefix = prefix || null;  // label prefix
+        };
+
+        this.display_label = function () {
+            if (typeof this.prefix === 'string') {
+                return this.prefix + ' ' + this.label;
+            }
+            return this.label;
+        };
+
+        this.init(value, label, prefix);
+    };
+
     // Field: object representing metadata for a single schema field:
     ns.Field = function Field(name, data) {
 
         this.init = function (name, data) {
             this.name = name;
             Object.keys(data).forEach(function (k) {
-                var v = data[k];
-                this[k] = (typeof v !== 'function') ? v : undefined;
+                var v = data[k],
+                    name = (k === 'vocabulary') ? '_vocabulary' : k;
+                this[name] = (typeof v !== 'function') ? v : undefined;
             }, this);
         };
 
@@ -67,6 +84,15 @@ uu.queryschema = (function ($, ns, uu, core, global) {
                 this.value_type === 'Choice' ||
                 this.fieldtype === 'Bool'
             );
+        };
+
+        this.vocabulary = function () {
+            if (!this.isChoice()) {
+                return null;
+            }
+            return this._vocabulary.map(function (v) {
+                return new ns.TermInfo(v);
+            });
         };
 
         this.init(name, data);
@@ -93,25 +119,6 @@ uu.queryschema = (function ($, ns, uu, core, global) {
     core.klass.subclasses(ns.Schema, core.Container);
 
     ns.comparators = c;
-
-    // TermInfo: vocabulary term for choices of Comparator, Value
-    ns.TermInfo = function (value, label, prefix) {
-
-        this.init = function (value, label, prefix) {
-            this.value = value || null;
-            this.label = label || null;
-            this.prefix = prefix || null;  // label prefix
-        };
-
-        this.display_label = function () {
-            if (typeof this.prefix === 'string') {
-                return this.prefix + ' ' + this.label;
-            }
-            return this.label;
-        };
-
-        this.init(value, label, prefix);
-    };
 
     c.ALL = new ns.TermInfo('All', 'contains all of','\u2286');
     c.ANY = new ns.TermInfo('Any', 'includes any of','*');
@@ -146,7 +153,6 @@ uu.queryschema = (function ($, ns, uu, core, global) {
      *              to a callback for a field via applyComparators.
      */
     ns.Comparators = function Comparators(schema) {
-        var apiBase = ns.comparatorsBase;
 
         this.init = function (schema) {
             this.schema = schema;

@@ -389,7 +389,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                         this.sync();
                     },
                     enumerable: true
-                }
+                },
             }
         );
 
@@ -462,6 +462,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
         };
 
         // UI/view sync:
+
         this.initFieldWidget = function () {
             var self = this,
                 schema = this.schema,
@@ -517,11 +518,38 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
 
         initSchemaContext(this);
 
+        Object.defineProperties(
+            this,
+            {
+                operator: {
+                    get: function () {
+                        return this._operator || 'AND';
+                    },
+                    set: function (v) {
+                        if (v !== 'AND' && v !== 'OR') {
+                            throw new Error('invalid operator value');
+                        }
+                        this._operator = v;
+                    }
+                }
+            }
+        );
+
+        this.syncQueryOpDisplay = function () {
+            var table = $('table.queries', this.target),
+                showrows = $('tr', table).not('.headings').slice(1),
+                queryOpCells = $('td.display-queryop', showrows);
+            queryOpCells.text(this.operator);
+        };
+
         this.newQuery = function () {
             var q = new ns.FieldQuery({
                 context: this
             });
             this.add(q);
+            if (this.target) {
+                this.syncQueryOpDisplay();
+            }
         };
 
         this.initView = function () {
@@ -541,6 +569,8 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             target.empty();
             innerhtml.appendTo(target);
             $('a.addquery', target).click(addHandler);
+            this.initQueryopInputs();
+            this.sync();
         };
 
         this.init = function (options) {
@@ -550,6 +580,39 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             if ($(this.target).length) {
                 this.initView();
             }
+        };
+
+
+        // UI bits:
+
+        this.syncQueryOperatorSelector = function () {
+            var opdiv = $('div.queryop-selection', this.target);
+            if (this.size() >= 2) {
+                opdiv.show();
+            } else {
+                opdiv.hide();
+            }
+        };
+
+        this.initQueryopInputs = function () {
+            var self = this,
+                opdiv = $('div.queryop-selection', this.target),
+                opinputs = $('input', opdiv);
+            this._operator = 'AND';
+            opinputs.change(function () {
+                var showOp = (self.size() >= 2),
+                    table = $('table.queries', self.target),
+                    showrows = $('tr', table).not('.headings').slice(1),
+                    queryOpCells = $('td.display-queryop', showrows),
+                    operator = opinputs.filter(':checked').val() || 'AND';
+                self.operator = operator;
+                if (showOp) {
+                    queryOpCells.text(self.operator);
+                } else {
+                    queryOpCells.text(' ');
+                }
+                self.sync();
+            });
         };
 
         // hooks to sync dependent components
@@ -565,6 +628,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                     $(ns.snippets.PLACEHOLDER).appendTo(tbody);
                 }
             }
+            this.syncQueryOperatorSelector();
         };
 
         // container change hooks:

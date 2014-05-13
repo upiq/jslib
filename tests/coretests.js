@@ -202,7 +202,7 @@
             var item = new core.Item();
             equal(
                 item.targetId,
-                item.namespace + '.' + item.id,
+                item.namespace + '_' + item.id,
                 'Compute target ID'
             );
         },
@@ -218,7 +218,7 @@
             equal(mock.namespace, newns, 'per-instance namespace');
             equal(
                 mock.targetId,
-                newns + '.' + mock.id,
+                newns + '_' + mock.id,
                 'per-instance namespace, target id'
             );
         },

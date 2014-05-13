@@ -1,0 +1,134 @@
+
+form.record-queries {
+    display:block;
+    background-color:#ddd;
+    width:100%;
+    margin-bottom:0.6em;
+}
+
+table.queries {
+    width:100%;
+}
+
+table.queries tr:nth-child(2n) td {
+    background-color:#eee;
+}
+
+table.queries th, table.queries td {
+    width:28%;
+    color:#889;
+    padding:0.3em 0.1em;
+}
+
+table.queries th {
+    background-color:#667;
+    color:#eee;
+}
+
+table.queries th.display-queryop, table.queries td.display-queryop {
+    max-width:7%;
+    font-size:60%;
+    font-weight:bold;
+    padding-right:0.2em;
+    text-align:right;
+}
+
+table.queries th.rowcontrol, table.queries td.rowcontrol {
+    width:7%;
+    text-align:right;
+}
+
+table.queries td.fieldspec {
+    max-width:40% !important;
+}
+
+table.queries td.fieldspec select {
+    max-width:20em;
+}
+
+table.queries td.value div.error:before {
+    content:">>> ";
+}
+
+table.queries td.value div.error {
+    background-color:#f73;
+    color:black;
+    font-weight:bold;
+}
+
+.addquery {
+    display:block;
+    font-size:115%;
+    max-width:15em;
+    border-radius: 0.3em 0.3em;
+    border:1px solid #999;
+    background-color:#eee;
+    padding:0.4em;
+    margin:0.5em;
+    margin-right:1em;
+    cursor:pointer;
+    color:#072;
+}
+
+.addquery span strong {
+    font-size:140%;
+}
+
+div#criteriaforms {
+    border:0.1em solid #6f7a73;
+    padding:0.5em 0.3;
+    background-color:#eee;
+}
+
+div#criteriaforms h3 {
+    color:#132;
+    background-color:#cfdfd0;
+    padding-left: 0.8em;
+    padding-top:0.2em;
+}
+
+form#payloads {
+    display: block;
+    text-align:center;
+    background-color:#6f7a73;
+    padding:0.1em;
+}
+
+form.record-queries {
+    margin-left:1em;
+    width:98%;
+}
+
+.savequery {
+    font-size:130%;
+    display:block;
+    max-width:15em;
+    border:1px solid #999;
+    border-radius: 0.3em 0.3em;
+    background-color:#eee;
+    padding:0.2em;
+    margin:0.5em;
+    margin-right:1em;
+    cursor:pointer;
+    color:black;
+}
+
+p.helptext {
+    color:#999;
+    font-size:80%;
+    font-style:italic;
+}
+
+div.queryop-selection {
+    clear:both;
+    font-size:85%;
+    margin-top:1.0em !important;
+    margin-left:1.0em;
+    padding:0.3em 1em;
+    border-left:0.5em solid #009;
+}
+
+form.record-queries div.queryop-selection {
+    display:none; /* initially hidden */
+}
+

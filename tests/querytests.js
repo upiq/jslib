@@ -193,6 +193,8 @@
       }
     };
 
+    uu.queryschema.mockSchema = mockSchema;
+
     ns.tests = {};
 
     ns.tests['Meta tests'] = {

@@ -248,6 +248,67 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
     // named snippets of HTML for use in creation:
     ns.snippets = {};
 
+    // RecordFilter (inner) HTML: must be modified to change ids
+    ns.snippets.RECORDFILTER = String() +
+        '  <table class="queries">' +
+        '   <tbody>' +
+        '    <tr class="headings">' +
+        '      <th class="display-queryop">&nbsp;</th>' +
+        '      <th>Field</th><th>Comparison</th>' +
+        '      <th>Value</th>' +
+        '      <th class="rowcontrol">&nbsp;</th>' +
+        '    </tr>' +
+        '    <tr class="placeholder">' +
+        '      <td class="noqueries" colspan="4">' +
+        '        <em>There are no queries defined for this filter.</em>' +
+        '      </td>' +
+        '    </tr>' +
+        '   </tbody>' +
+        '  </table>' +
+        '  <a class="addquery">' +
+        '    <span>' +
+        '      <strong>&#x2b;</strong>' +
+        '      Add a field query to this filter' +
+        '    </span>' +
+        '  </a>' +
+        '  <div class="queryop-selection">' +
+        '    <h5>' +
+        '      Select an operation to apply across' +
+        '      multiple selected fields.</h5>' +
+        '    <input type="radio"' +
+        '           name="queryop"' +
+        '           value="AND"' +
+        '           checked="CHECKED"' +
+        '           id="queryop-AND" />' +
+        '    <label for="queryop-AND">AND</label>' +
+        '    <input type="radio"' +
+        '           name="queryop"' +
+        '           value="OR"' +
+        '           id="queryop-OR"' +
+        '           />' +
+        '    <label for="queryop-OR">OR</label>' +
+        '  </div>';
+
+    ns.snippets.NEWROW = String() +
+        '<tr>' +
+        ' <td class="display-queryop">&nbsp;</td>' +
+        ' <td class="fieldspec"></td>' +
+        ' <td class="compare"></td>' +
+        ' <td class="value"></td>' +
+        ' <td class="rowcontrol">' +
+        '  <a class="removerow" title="Remove query row">' +
+        '   <img src="./delete_icon.png" alt="delete"/>' +
+        '  </a>' +
+        ' </td>' +
+        '</tr>';
+
+    ns.snippets.PLACEHOLDER = String() +
+        '<tr class="placeholder">' +
+        ' <td class="noqueries" colspan="5">' +
+        '  <em>There are no queries defined for this filter.</em>' +
+        ' </td>' +
+        '</tr>';
+
     ns.snippets.NOVALUE = String() +
         '<option value="--NOVALUE--">--Select a value--</option>';
 
@@ -332,6 +393,24 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             }
         );
 
+        this._mktarget = function () {
+            var self = this,
+                target = $(ns.snippets.NEWROW),
+                context = this.context || {},
+                container = $(context.target);
+            if (container.length) {
+                target.appendTo($('table.queries tbody', container));
+                this.target = target;
+                target.attr('id', this.targetId);
+                $('a.removerow', target).click(function () {
+                    target.remove();
+                    context.delete(self.id);
+                    context.sync(self);
+                });
+                this.sync();
+            }
+        };
+
         this.init = function (options) {
             validateOptions(options);
             ns.FieldQuery.prototype.init.apply(this, [options]);
@@ -343,6 +422,9 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                 if (!this.schema.has(this._field.name)) {
                     throw new Error('Field in ctor not in bound schema');
                 }
+            }
+            if (!options.target && options.context) {
+                this._mktarget();
             }
         };
 
@@ -379,10 +461,51 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             return 'input';  // fallback/default
         };
 
+        // UI/view sync:
+        this.initFieldWidget = function () {
+            var self = this,
+                schema = this.schema,
+                //fields = this.context.fields,
+                rowname = this.targetId,
+                row = $('#'+rowname, this.context.target),
+                cell = $('td.fieldspec', row),
+                selname = rowname + '-fieldname',
+                select = $('<select />');
+            select.attr('name', selname);
+            // clear any existing content of cell (empty)
+            cell.empty();
+            // append select to cell
+            select.appendTo(cell);
+            // no-value sentinel for dropdown:
+            $(ns.snippets.NOVALUE).appendTo(select);
+            select.val(ns.NOVALUE);
+            // options, given params
+            schema.forEach(function (field) {
+                var fieldname = field.name,
+                    isSelected = (self.field && self.field.name === fieldname),
+                    option = $('<option />')
+                        .appendTo(select)
+                        .attr('value', fieldname)
+                        .text(field.title);
+                if (isSelected) {
+                    select.val(fieldname);
+                }
+            });
+            // event callback for change of selected field
+            select.change(function () {
+                var fieldname = select.val(),
+                    field = schema.get(fieldname);
+                self.field = (field) ? field : null;
+            });
+        };
+
         // hooks to sync dependent components
         this.preSync = function (observed) {};
         this.postSync = function (observed) {};
-        this.syncTarget = function (observed) {};
+        this.syncTarget = function (observed) {
+            console.log(this.field);
+            this.initFieldWidget();
+        };
 
         this.init(options);
     };
@@ -395,16 +518,55 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
 
         initSchemaContext(this);
 
+        this.newQuery = function () {
+            var q = new ns.FieldQuery({
+                context: this
+            });
+            this.add(q);
+        };
+
+        this.initView = function () {
+            var self = this,
+                target = $(this.target),
+                innerhtml = $(ns.snippets.RECORDFILTER),
+                addHandler = function () {
+                    var btn = $(this);
+                    self.newQuery();
+                    self.sync();
+                };
+            if (!target.length) {
+                throw new Error('no DOM target for record filter.');
+            }
+            target.attr('id', this.targetId);
+            target.addClass('record-filter');
+            target.empty();
+            innerhtml.appendTo(target);
+            $('a.addquery', target).click(addHandler);
+        };
+
         this.init = function (options) {
             validateOptions(options);
             ns.RecordFilter.prototype.init.apply(this, [options]);
             this._schema = options.schema || undefined;
+            if ($(this.target).length) {
+                this.initView();
+            }
         };
 
         // hooks to sync dependent components
         this.preSync = function (observed) {};
         this.postSync = function (observed) {};
-        this.syncTarget = function (observed) {};
+        this.syncTarget = function (observed) {
+            var tbody = $('table.queries tbody', this.target),
+                placeholder = $('tr.placeholder', tbody);
+            if (this.size()) {
+                placeholder.remove();
+            } else {
+                if (!placeholder.length) {
+                    $(ns.snippets.PLACEHOLDER).appendTo(tbody);
+                }
+            }
+        };
 
         // container change hooks:
         this.afterAdd = function (key, value) {
@@ -489,7 +651,14 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
     };
 
     $(document).ready(function () {
-        ns.initUI();
+        var target = $('<div>').appendTo($('div.editor')),
+            schema = new uu.queryschema.Schema(uu.queryschema.mockSchema),
+            rfilter = new uu.queryeditor.RecordFilter({
+                target: target,
+                schema: schema
+            });
+
+        //ns.initUI();
     });
 
     return ns;

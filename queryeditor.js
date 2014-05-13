@@ -369,7 +369,6 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                 choice = (!!field) ? field.isChoice() : false,
                 chooseOnlyOne = (['Any', 'All'].indexOf(comparator) === -1),
                 select;
-            console.log(this._field, comparator);
             if (!field || !comparator) {
                 return null;
             }

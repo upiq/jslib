@@ -493,6 +493,47 @@
                 strictEqual(query.completionState(), true, 'Complete');
                 query.value = [];  // set empty
                 strictEqual(query.completionState(), false, 'Empty value');
+            },
+            'field query, value input type': function (assert) {
+                var schema = new uu.queryschema.Schema(mockSchema),
+                    field = schema.get('asthma_diagnosis_documented'),
+                    field2 = schema.get('asthma_control'),
+                    field3 = schema.get('referral'),
+                    field4 = schema.get('type_of_visit'),
+                    query = new uu.queryeditor.FieldQuery({
+                        schema: schema,
+                        field: field,
+                    }),
+                    query2 = new uu.queryeditor.FieldQuery({
+                        schema: schema,
+                        field: field2,
+                    }),
+                    query3 = new uu.queryeditor.FieldQuery({
+                        schema: schema,
+                        field: field3,
+                    }),
+                    query4 = new uu.queryeditor.FieldQuery({
+                        schema: schema,
+                        field: field4,
+                    });
+                // single or multiple choice for a Choice, <=3 choice terms:
+                query.comparator = 'Eq';
+                assert.equal(query.inputType(), 'radio', 'Radio of Choice');
+                query.comparator = 'Any';
+                assert.equal(query.inputType(), 'multi', 'Multi of Choice');
+                // single or multiple choice for a Choice, >3 choice terms:
+                query2.comparator = 'Eq';
+                assert.equal(query2.inputType(), 'select', 'Select of Choice');
+                query2.comparator = 'Any';
+                assert.equal(query2.inputType(), 'multi', 'Multi of Choice');
+                // multiple choice
+                query3.comparator = 'Any';
+                assert.equal(query3.inputType(), 'multi', 'Multi of List');
+                query2.comparator = 'All';
+                assert.equal(query3.inputType(), 'multi', 'Multi of List');
+                // input widget
+                query4.comparator = 'Eq';
+                assert.equal(query4.inputType(), 'input', 'Input box');
             }
         };
     };

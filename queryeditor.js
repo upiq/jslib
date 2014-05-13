@@ -207,7 +207,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
     function acquire_schema(context) {
         var parent = context.context;
         if (parent) {
-            return context._schema || context.context.schema;
+            return context._schema || parent.schema;
         }
         return context._schema;  // end of chain, may be undefined or null
     }
@@ -339,6 +339,11 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             this._comparator = options.comparator || null;
             this._value = options.value || null;
             this._schema = options.schema || undefined;
+            if (this._field && this.schema) {
+                if (!this.schema.has(this._field.name)) {
+                    throw new Error('Field in ctor not in bound schema');
+                }
+            }
         };
 
         this.completionState = function () {
@@ -355,6 +360,24 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                 return true;
             }
             return false;  // incomplete, but not empty
+        };
+
+        // value widget type determiner:
+        this.inputType = function () {
+            var field = this.field,
+                comparator = this.comparator || 'Eq',
+                choice = (!!field) ? field.isChoice() : false,
+                chooseOnlyOne = (['Any', 'All'].indexOf(comparator) === -1),
+                select;
+            console.log(this._field, comparator);
+            if (!field || !comparator) {
+                return null;
+            }
+            if (choice) {
+                select = (field.vocabulary().length <= 3) ? 'radio' : 'select';
+                return (chooseOnlyOne) ? select : 'multi';
+            }
+            return 'input';  // fallback/default
         };
 
         // hooks to sync dependent components

@@ -528,6 +528,9 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             select.attr('name', selname);
             // clear any existing content of cell (empty)
             cell.empty();
+            if (!vocab) {
+                return;  // reset field to null
+            }
             // append select to cell
             select.appendTo(cell);
             // no-value sentinel for dropdown:
@@ -554,12 +557,11 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
         this.syncTarget = function (observed) {
             var row = $(this.target),
                 compareCell = $('td.compare', row),
+                field = this.field,
                 vocab;
             this.initFieldWidget();
-            if (this.field) {
-                vocab = this.comparators.vocabulary(this.field);
-                this.initComparatorWidget(vocab);
-            }
+            vocab = (field) ? this.comparators.vocabulary(field) : null;
+            this.initComparatorWidget(vocab);
         };
 
         this.init(options);

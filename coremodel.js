@@ -130,7 +130,7 @@ window[COREMODELNS] = (function ($, core) {
                 targetId: {
                     // computed, read-only property
                     get: function () {
-                        return this.namespace + '/' + this.id;
+                        return this.namespace + '.' + this.id;
                     },
                     set: function () {}
                 }

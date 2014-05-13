@@ -503,7 +503,6 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
         this.preSync = function (observed) {};
         this.postSync = function (observed) {};
         this.syncTarget = function (observed) {
-            console.log(this.field);
             this.initFieldWidget();
         };
 

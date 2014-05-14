@@ -591,6 +591,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                 select = $('<select />'),
                 valueCell = $('td.value', this.target),
                 inputName = this.targetId + '-' + field.name + '-value';
+            select.attr('name', inputName);
             $('<option>').appendTo(select).val('EMPTY').text('-- SELECT A VALUE --');
             vocab.forEach(function (term) {
                 var value = term.value,
@@ -607,13 +608,41 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
         };
 
         this.initMultiValueWidget = function () {
-            var field = this.field,
-                vocab = field.vocabulary();
-            console.log('MULTI!');
+            var self = this,
+                field = this.field,
+                vocab = field.vocabulary(),
+                valueCell = $('td.value', this.target),
+                inputName = this.targetId + '-' + field.name + '-value',
+                currentValue = this.value,
+                select = $('<select multiple="multiple">').appendTo(valueCell);
+            vocab.forEach(function (term) {
+                var option = $('<option>'),
+                    label = term.display_label();
+                option.appendTo(select).val(term.value).text(label);
+                if (Array.isArray(self.value)) {
+                    if ($.inArray(term.value, self.value) !== -1) {
+                        option.attr('selected', 'selected');
+                    }
+                }
+                select.change(function () {
+                    self.value = select.val();
+                });
+            });
         };
 
         this.initInputValueWidget = function () {
-            console.log('INPUT!');
+            var self = this,
+                field = this.field,
+                valueCell = $('td.value', this.target),
+                inputName = this.targetId + '-' + field.name + '-value',
+                input = $('<input />');
+                input.attr('name', inputName);
+                input.attr('id', inputName);
+                input.val(this.value);
+                valueCell.append(input);
+                input.change(function () {
+                    self.value = input.val();
+                });
         };
 
         this.initValueWidget = function () {

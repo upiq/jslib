@@ -56,20 +56,20 @@ table.queries td.value div.error {
     font-weight:bold;
 }
 
-.addquery {
+.addquery, .addfilter {
     display:block;
     font-size:140%;
-    max-width:2em;
+    max-width:1.1em;
     border-radius: 0.3em 0.3em;
     border:1px solid #555;
     background-color:#eee;
-    padding:0.6em;
+    padding:0.1em 0.3em;
     margin:0.2em;
     cursor:pointer;
     color:#072;
 }
 
-.addquery span strong {
+.addquery span strong, .addfilter span strong {
     font-size:140%;
 }
 
@@ -131,3 +131,22 @@ form.record-queries div.queryop-selection {
     display:none; /* initially hidden */
 }
 
+.filter-group {
+    background-color:#eee;
+    padding:0.4em;
+}
+
+.groupcontrol {
+    border: 1px solid #555;
+    background-color:#f0f0e0;
+}
+
+.groupcontrol a.addfilter {
+    float:left;
+}
+
+.record-filter {
+    clear:both;
+    border:1px solid #999;
+    margin-top:0.2em;
+}

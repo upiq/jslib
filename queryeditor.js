@@ -269,13 +269,13 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
         '   <tbody>' +
         '    <tr class="headings">' +
         '      <th class="display-queryop">' +
-        '  <a class="addquery"' +
-        '     title="Add a field query to this filter">' +
-        '    <span>' +
-        '      <strong>&#x2b;</strong>' +
-        '    </span>' +
-        '  </a>' +
-        '&nbsp;</th>' +
+        '        <a class="addquery"' +
+        '           title="Add a field query to this filter">' +
+        '          <span>'+
+        '            <strong>&#x2b;</strong>' +
+        '          </span>'+
+        '        </a>' +
+        '      </th>' +
         '      <th>Field</th><th>Comparison</th>' +
         '      <th>Value</th>' +
         '      <th class="rowcontrol">&nbsp;</th>' +
@@ -324,6 +324,28 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
         '  <em>There are no queries defined for this filter.</em>' +
         ' </td>' +
         '</tr>';
+
+    ns.snippets.GROUPCONTROL = String() +
+        '<div class="groupcontrol">' +
+        '  <a class="addfilter" title="Add a filter to this group">' +
+        '    <span><strong>&#x21f2;</strong></span>' +
+        '  </a>' +
+        '  <span class="grouplabel">-- (group) --</span>' +
+        '  <div class="groupop-selection">' +
+        '    <input type="radio"' +
+        '           name="groupop"' +
+        '           value="union"' +
+        '           id="groupop-union"' +
+        '           checked="CHECKED"' +
+        '           />' +
+        '    <label for="groupop-OR">OR (union)</label>' +
+        '    <input type="radio"' +
+        '           name="groupop"' +
+        '           value="intersection"' +
+        '           id="groupop-intersection" />' +
+        '    <label for="groupop-intersection">AND (intersection)</label>' +
+        '  </div>' +
+        '</div>';
 
     ns.snippets.NOVALUE = String() +
         '<option value="--NOVALUE--">--Select a value--</option>';
@@ -864,6 +886,41 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             ns.FilterGroup.prototype.init.apply(this, [options]);
             this._schema = options.schema || undefined;
             this._comparators = options.comparators || undefined;
+            if (this.target) {
+                this.initView();
+            }
+        };
+
+        this.newFilter = function () {
+            var target = $('<div>').appendTo(this.target),
+                filter = new ns.RecordFilter({
+                context: this,
+                target: target
+            });
+        };
+
+        this.initView = function () {
+            var self = this,
+                control = $(ns.snippets.GROUPCONTROL),
+                addfilter = $('a.addfilter', control),
+                opsel = $('.groupop-selection', control),
+                opinputs = $('input', opsel);
+            if (!(this.target instanceof $)) {
+                return;
+            }
+            this.target.addClass('filter-group');
+            opinputs.each(function () {
+                var uid = self.id,
+                    input = $(this),
+                    baseid = input.attr('id'),
+                    basename = input.attr('name');
+                input.attr('name', basename + '-' + uid);
+                input.attr('id', baseid + '-' + uid);
+            });
+            addfilter.click(function () {
+                self.newFilter();
+            });
+            control.appendTo(this.target);
         };
 
         this.postSync = function (observed) {
@@ -917,6 +974,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
     $(document).ready(function () {
         var target1 = $('<div>').appendTo($('div.editor1')),
             target2 = $('<div>').appendTo($('div.editor2')),
+            target3 = $('<div>').appendTo($('div.grouped')),
             schema = new uu.queryschema.Schema(uu.queryschema.mockSchema),
             comparators = new uu.queryschema.Comparators(schema),
             rfilter1 = new uu.queryeditor.RecordFilter({
@@ -926,6 +984,11 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             }),
             rfilter2 = new uu.queryeditor.RecordFilter({
                 target: target2,
+                schema: schema,
+                comparators: comparators
+            }),
+            group = new uu.queryeditor.FilterGroup({
+                target: target3,
                 schema: schema,
                 comparators: comparators
             });

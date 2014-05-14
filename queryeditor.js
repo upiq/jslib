@@ -552,6 +552,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             }
             // event callback for change of selected comparator
             select.change(function () {
+                self.value = null;  // reset
                 self.comparator = select.val();
                 self.sync();
             });
@@ -584,9 +585,25 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
         };
 
         this.initSelectValueWidget = function () {
-            var field = this.field,
-                vocab = field.vocabulary();
-            console.log('SELECT!');
+            var self = this,
+                field = this.field,
+                vocab = field.vocabulary(),
+                select = $('<select />'),
+                valueCell = $('td.value', this.target),
+                inputName = this.targetId + '-' + field.name + '-value';
+            $('<option>').appendTo(select).val('EMPTY').text('-- SELECT A VALUE --');
+            vocab.forEach(function (term) {
+                var value = term.value,
+                    label = term.display_label();
+                $('<option>').appendTo(select).val(value).text(label);
+            });
+            if (typeof this.value === 'string') {
+                select.val(this.value);
+            }
+            select.appendTo(valueCell);
+            select.change(function () {
+                self.value = select.val();
+            });
         };
 
         this.initMultiValueWidget = function () {

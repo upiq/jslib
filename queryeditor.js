@@ -552,8 +552,10 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             }
             // event callback for change of selected comparator
             select.change(function () {
+                var v = select.val();
+                v = (v === ns.NOVALUE) ? null : v;
                 self.value = null;  // reset
-                self.comparator = select.val();
+                self.comparator = v;
                 self.sync();
             });
         };
@@ -636,13 +638,13 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                 valueCell = $('td.value', this.target),
                 inputName = this.targetId + '-' + field.name + '-value',
                 input = $('<input />');
-                input.attr('name', inputName);
-                input.attr('id', inputName);
-                input.val(this.value);
-                valueCell.append(input);
-                input.change(function () {
-                    self.value = input.val();
-                });
+            input.attr('name', inputName);
+            input.attr('id', inputName);
+            input.val(this.value);
+            valueCell.append(input);
+            input.change(function () {
+                self.value = input.val();
+            });
         };
 
         this.initValueWidget = function () {

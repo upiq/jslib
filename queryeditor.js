@@ -268,7 +268,14 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
         '  <table class="queries">' +
         '   <tbody>' +
         '    <tr class="headings">' +
-        '      <th class="display-queryop">&nbsp;</th>' +
+        '      <th class="display-queryop">' +
+        '  <a class="addquery"' +
+        '     title="Add a field query to this filter">' +
+        '    <span>' +
+        '      <strong>&#x2b;</strong>' +
+        '    </span>' +
+        '  </a>' +
+        '&nbsp;</th>' +
         '      <th>Field</th><th>Comparison</th>' +
         '      <th>Value</th>' +
         '      <th class="rowcontrol">&nbsp;</th>' +
@@ -280,12 +287,6 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
         '    </tr>' +
         '   </tbody>' +
         '  </table>' +
-        '  <a class="addquery">' +
-        '    <span>' +
-        '      <strong>&#x2b;</strong>' +
-        '      Add a field query to this filter' +
-        '    </span>' +
-        '  </a>' +
         '  <div class="queryop-selection">' +
         '    <h5>' +
         '      Select an operation to apply across' +

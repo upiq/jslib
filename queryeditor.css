@@ -58,14 +58,13 @@ table.queries td.value div.error {
 
 .addquery {
     display:block;
-    font-size:115%;
-    max-width:15em;
+    font-size:140%;
+    max-width:2em;
     border-radius: 0.3em 0.3em;
-    border:1px solid #999;
+    border:1px solid #555;
     background-color:#eee;
-    padding:0.4em;
-    margin:0.5em;
-    margin-right:1em;
+    padding:0.6em;
+    margin:0.2em;
     cursor:pointer;
     color:#072;
 }

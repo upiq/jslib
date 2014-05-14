@@ -463,7 +463,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
         // value widget type determiner:
         this.inputType = function () {
             var field = this.field,
-                comparator = this.comparator || 'Eq',
+                comparator = this.comparator,
                 choice = (!!field) ? field.isChoice() : false,
                 chooseOnlyOne = (['Any', 'All'].indexOf(comparator) === -1),
                 select;
@@ -514,7 +514,9 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                     changed = (fieldname !== prev);
                 self.field = (field) ? field : null;
                 if (changed) {
-                    self.comparator = null;  // reset comp on field change
+                    // reset comparator and value on field change
+                    self.comparator = null;
+                    self.value = null;
                 }
             });
         };
@@ -555,6 +557,66 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             });
         };
 
+        this.initRadioValueWidget = function () {
+            var self = this,
+                field = this.field,
+                vocab = field.vocabulary(),
+                valueCell = $('td.value', this.target),
+                inputName = this.targetId + '-' + field.name + '-value';
+            vocab.forEach(function (term) {
+                var value = term.value,
+                    label = term.display_label(),
+                    idiv = $('<div><input type="radio" /></div>'),
+                    input = $('input', idiv),
+                    termid = inputName + '-' + value;
+                    input.attr('name', inputName)
+                         .attr('id', termid)
+                         .attr('value', term.value);
+                    if (term.value === self.value) {
+                        input.attr('checked', 'CHECKED');
+                    }
+                    $('<label>'+label+'</label>').attr('for', termid).appendTo(idiv);
+                    idiv.appendTo(valueCell);
+                    input.change(function () {
+                        self.value = input.val();
+                    });
+            });
+        };
+
+        this.initSelectValueWidget = function () {
+            var field = this.field,
+                vocab = field.vocabulary();
+            console.log('SELECT!');
+        };
+
+        this.initMultiValueWidget = function () {
+            var field = this.field,
+                vocab = field.vocabulary();
+            console.log('MULTI!');
+        };
+
+        this.initInputValueWidget = function () {
+            console.log('INPUT!');
+        };
+
+        this.initValueWidget = function () {
+            var self = this,
+                valueCell = $('td.value', this.target),
+                inputType = this.inputType(),
+                initFn = {
+                    radio: this.initRadioValueWidget,
+                    select: this.initSelectValueWidget,
+                    multi: this.initMultiValueWidget,
+                    input: this.initInputValueWidget
+                };
+            valueCell.empty();
+            if (!inputType) {
+                return;
+            }
+            // pivot specific init function based on inputType
+            initFn[inputType].call(this);
+        };
+
         // hooks to sync dependent components
         this.preSync = function (observed) {};
         this.postSync = function (observed) {};
@@ -566,6 +628,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             this.initFieldWidget();
             vocab = (field) ? this.comparators.vocabulary(field) : null;
             this.initComparatorWidget(vocab);
+            this.initValueWidget();
         };
 
         this.init(options);

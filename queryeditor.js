@@ -772,6 +772,14 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                 opdiv = $('div.queryop-selection', this.target),
                 opinputs = $('input', opdiv);
             this._operator = 'AND';
+            opinputs.each(function () {
+                var uid = self.id,
+                    input = $(this),
+                    baseid = input.attr('id'),
+                    basename = input.attr('name');
+                input.attr('name', basename + '-' + uid);
+                input.attr('id', baseid + '-' + uid);
+            });
             opinputs.change(function () {
                 var showOp = (self.size() >= 2),
                     table = $('table.queries', self.target),
@@ -889,11 +897,17 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
     };
 
     $(document).ready(function () {
-        var target = $('<div>').appendTo($('div.editor')),
+        var target1 = $('<div>').appendTo($('div.editor1')),
+            target2 = $('<div>').appendTo($('div.editor2')),
             schema = new uu.queryschema.Schema(uu.queryschema.mockSchema),
             comparators = new uu.queryschema.Comparators(schema),
-            rfilter = new uu.queryeditor.RecordFilter({
-                target: target,
+            rfilter1 = new uu.queryeditor.RecordFilter({
+                target: target1,
+                schema: schema,
+                comparators: comparators
+            }),
+            rfilter2 = new uu.queryeditor.RecordFilter({
+                target: target2,
                 schema: schema,
                 comparators: comparators
             });

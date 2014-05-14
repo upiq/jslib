@@ -482,10 +482,9 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
         this.initFieldWidget = function () {
             var self = this,
                 schema = this.schema,
-                rowname = this.targetId,
-                row = $('#'+rowname, this.context.target),
+                row = this.target,
                 cell = $('td.fieldspec', row),
-                selname = rowname + '-fieldname',
+                selname = this.targetId + '-fieldname',
                 select = $('<select />');
             select.attr('name', selname);
             // clear any existing content of cell (empty)
@@ -510,8 +509,13 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             // event callback for change of selected field
             select.change(function () {
                 var fieldname = select.val(),
-                    field = schema.get(fieldname);
+                    field = schema.get(fieldname),
+                    prev = (self.field) ? self.field.name : null,
+                    changed = (fieldname !== prev);
                 self.field = (field) ? field : null;
+                if (changed) {
+                    self.comparator = null;  // reset comp on field change
+                }
             });
         };
 
@@ -519,10 +523,9 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
         // initialize the dropdown for the row associated with this.
         this.initComparatorWidget = function (vocab) {
             var self = this,
-                rowname = this.targetId,
-                row = $('#'+rowname, this.context.target),
+                row = this.target,
                 cell = $('td.compare', row),
-                selname = rowname + '-comparator',
+                selname = this.targetId + '-comparator',
                 select = $('<select />'),
                 selected = this.comparator;
             select.attr('name', selname);
@@ -548,6 +551,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             // event callback for change of selected comparator
             select.change(function () {
                 self.comparator = select.val();
+                self.sync();
             });
         };
 

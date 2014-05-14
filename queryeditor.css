@@ -58,8 +58,8 @@ table.queries td.value div.error {
 
 .addquery, .addfilter {
     display:block;
-    font-size:140%;
-    max-width:1.1em;
+    font-size:100%;
+    max-width:2em;
     border-radius: 0.3em 0.3em;
     border:1px solid #555;
     background-color:#eee;
@@ -70,7 +70,8 @@ table.queries td.value div.error {
 }
 
 .addquery span strong, .addfilter span strong {
-    font-size:140%;
+    font-size:210%;
+    padding-right:0.1em;
 }
 
 div#criteriaforms {
@@ -132,7 +133,8 @@ form.record-queries div.queryop-selection {
 }
 
 .filter-group {
-    background-color:#eee;
+    border:1px solid #aaa;
+    background-color:#ccd;
     padding:0.4em;
 }
 
@@ -143,10 +145,58 @@ form.record-queries div.queryop-selection {
 
 .groupcontrol a.addfilter {
     float:left;
+    max-width:6em !important;
+}
+
+.groupcontrol .groupop-selection {
+    text-align:right;
+    margin-right:1em;
+    color:#466;
+    font-size:85%;
+}
+
+.filter-group .groupop {
+    padding:0.1em 0.5em;
+    color:#ffa;
+    margin:0.4em 1.5em;
+    border-left:0.5em solid white;
+    background-color:#065;
+    width:22em;
+}
+
+.filter-group {
+    min-height:3em;
 }
 
 .record-filter {
     clear:both;
     border:1px solid #999;
+    background-color:white;
     margin-top:0.2em;
+}
+
+table.queries th.rowcontrol {
+    position:relative;
+}
+
+table.queries th.rowcontrol a.removefilter {
+    display:none;
+}
+
+div.filter-group table.queries th.rowcontrol a.removefilter {
+    display:block;
+}
+
+table.queries a.removefilter {
+    background-color:white;
+    border-radius:100%;
+    border:0.03em solid #aaa;
+    display:block;
+    width:0.5em;
+    height:0.5em;
+    padding:0.2em 0.7em 0.6em 0.1em;
+    box-shadow:-0.3em 0 0.4em #333;
+    position:absolute;
+    right:0.5em;
+    margin-top:-1em;
 }

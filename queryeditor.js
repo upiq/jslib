@@ -278,10 +278,14 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
         '      </th>' +
         '      <th>Field</th><th>Comparison</th>' +
         '      <th>Value</th>' +
-        '      <th class="rowcontrol">&nbsp;</th>' +
+        '      <th class="rowcontrol">' +
+        '  <a class="removefilter" title="Remove this filter">' +
+        '   <img src="./delete_icon.png" alt="delete"/>' +
+        '  </a>' +
+        '       &nbsp;</th>' +
         '    </tr>' +
         '    <tr class="placeholder">' +
-        '      <td class="noqueries" colspan="4">' +
+        '      <td class="noqueries" colspan="5">' +
         '        <em>There are no queries defined for this filter.</em>' +
         '      </td>' +
         '    </tr>' +
@@ -328,10 +332,10 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
     ns.snippets.GROUPCONTROL = String() +
         '<div class="groupcontrol">' +
         '  <a class="addfilter" title="Add a filter to this group">' +
-        '    <span><strong>&#x21f2;</strong></span>' +
+        '    <span><strong>&#x21f2;</strong></span> Add filter' +
         '  </a>' +
-        '  <span class="grouplabel">-- (group) --</span>' +
         '  <div class="groupop-selection">' +
+        '    <em class="grouplabel">Operator to apply across filters:</em>' +
         '    <input type="radio"' +
         '           name="groupop"' +
         '           value="union"' +
@@ -344,6 +348,11 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
         '           value="intersection"' +
         '           id="groupop-intersection" />' +
         '    <label for="groupop-intersection">AND (intersection)</label>' +
+        '    <input type="radio"' +
+        '           name="groupop"' +
+        '           value="difference"' +
+        '           id="groupop-intersection" />' +
+        '    <label for="groupop-intersection">MINUS (complement)</label>' +
         '  </div>' +
         '</div>';
 
@@ -440,7 +449,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                 target.appendTo($('table.queries tbody', container));
                 this.target = target;
                 target.attr('id', this.targetId);
-                $('a.removerow', target).click(function () {
+                $('a.removerow', target).unbind().click(function () {
                     target.remove();
                     context.delete(self.id);
                     context.sync(self);
@@ -530,7 +539,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                 }
             });
             // event callback for change of selected field
-            select.change(function () {
+            select.unbind().change(function () {
                 var fieldname = select.val(),
                     field = schema.get(fieldname),
                     prev = (self.field) ? self.field.name : null,
@@ -574,7 +583,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                 select.val(selected);
             }
             // event callback for change of selected comparator
-            select.change(function () {
+            select.unbind().change(function () {
                 var v = select.val();
                 v = (v === ns.NOVALUE) ? null : v;
                 self.value = null;  // reset
@@ -603,7 +612,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                     }
                     $('<label>'+label+'</label>').attr('for', termid).appendTo(idiv);
                     idiv.appendTo(valueCell);
-                    input.change(function () {
+                    input.unbind().change(function () {
                         self.value = input.val();
                     });
             });
@@ -627,7 +636,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                 select.val(this.value);
             }
             select.appendTo(valueCell);
-            select.change(function () {
+            select.unbind().change(function () {
                 self.value = select.val();
             });
         };
@@ -649,7 +658,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                         option.attr('selected', 'selected');
                     }
                 }
-                select.change(function () {
+                select.unbind().change(function () {
                     self.value = select.val();
                 });
             });
@@ -665,7 +674,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             input.attr('id', inputName);
             input.val(this.value);
             valueCell.append(input);
-            input.change(function () {
+            input.unbind().change(function () {
                 self.value = input.val();
             });
         };
@@ -692,7 +701,6 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
         this.preSync = function (observed) {};
         this.postSync = function (observed) {
             if (this.context && this.context.sync) {
-                console.log('FieldQuery calling RecordFilter sync');
                 this.context.sync(this);
             }
         };
@@ -768,7 +776,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             target.addClass('record-filter');
             target.empty();
             innerhtml.appendTo(target);
-            $('a.addquery', target).click(addHandler);
+            $('a.addquery', target).unbind().click(addHandler);
             this.initQueryopInputs();
             this.sync();
         };
@@ -808,7 +816,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                 input.attr('name', basename + '-' + uid);
                 input.attr('id', baseid + '-' + uid);
             });
-            opinputs.change(function () {
+            opinputs.unbind().change(function () {
                 var showOp = (self.size() >= 2),
                     table = $('table.queries', self.target),
                     showrows = $('tr', table).not('.headings').slice(1),
@@ -828,7 +836,6 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
         this.preSync = function (observed) {};
         this.postSync = function (observed) {
             if (this.context && this.context.sync) {
-                console.log('RecordFilter calling FieldGroup sync');
                 this.context.sync(this);
             }
         };
@@ -886,17 +893,27 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             ns.FilterGroup.prototype.init.apply(this, [options]);
             this._schema = options.schema || undefined;
             this._comparators = options.comparators || undefined;
+            this.operator = options.operator || 'union';
             if (this.target) {
                 this.initView();
             }
         };
 
+        this.opLabel = function () {
+            return {
+                'union': 'OR',
+                'intersection': 'AND',
+                'difference': 'MINUS / difference / relative complement)'
+            }[this.operator] || 'OR';
+        };
+
         this.newFilter = function () {
             var target = $('<div>').appendTo(this.target),
                 filter = new ns.RecordFilter({
-                context: this,
-                target: target
-            });
+                    context: this,
+                    target: target
+                });
+            this.add(filter);
         };
 
         this.initView = function () {
@@ -908,6 +925,10 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             if (!(this.target instanceof $)) {
                 return;
             }
+            opinputs.unbind().change(function () {
+                self.operator = $(this).val();
+                self.sync();
+            });
             this.target.addClass('filter-group');
             opinputs.each(function () {
                 var uid = self.id,
@@ -917,7 +938,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                 input.attr('name', basename + '-' + uid);
                 input.attr('id', baseid + '-' + uid);
             });
-            addfilter.click(function () {
+            addfilter.unbind().click(function () {
                 self.newFilter();
             });
             control.appendTo(this.target);
@@ -925,9 +946,29 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
 
         this.postSync = function (observed) {
             if (this.context && this.context.sync) {
-                console.log('FilterGroup calling ComposedQuery sync');
                 this.context.sync(this);
             }
+        };
+
+        this.syncTarget = function (observed) {
+            var self = this,
+                target = this.target,
+                operator = this.operator,
+                opdisplay = $('<div class="groupop"></div>'),
+                intermediate = $(this.values().slice(0, -1).map(function (v) {
+                    return v.target[0];
+                }, this));
+            $('div.groupop', target).remove();
+            opdisplay.text('(( ' + this.opLabel() + ' ))');
+            intermediate.after(opdisplay);
+            // finally make it possible to remove filters with buttons:
+            $('a.removefilter', this.target).unbind().click(function () {
+                var btn = $(this),
+                    target = $(btn.parents('div.record-filter')[0]),
+                    targetId = target.attr('id').split('_')[1];
+                self.delete(targetId);
+                target.remove();
+            });
         };
 
         this.init(options);

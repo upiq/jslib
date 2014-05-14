@@ -668,7 +668,12 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
 
         // hooks to sync dependent components
         this.preSync = function (observed) {};
-        this.postSync = function (observed) {};
+        this.postSync = function (observed) {
+            if (this.context && this.context.sync) {
+                console.log('FieldQuery calling RecordFilter sync');
+                this.context.sync(this);
+            }
+        };
         this.syncTarget = function (observed) {
             var row = $(this.target),
                 compareCell = $('td.compare', row),
@@ -799,7 +804,12 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
 
         // hooks to sync dependent components
         this.preSync = function (observed) {};
-        this.postSync = function (observed) {};
+        this.postSync = function (observed) {
+            if (this.context && this.context.sync) {
+                console.log('RecordFilter calling FieldGroup sync');
+                this.context.sync(this);
+            }
+        };
         this.syncTarget = function (observed) {
             var tbody = $('table.queries tbody', this.target),
                 placeholder = $('tr.placeholder', tbody);
@@ -854,6 +864,13 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             ns.FilterGroup.prototype.init.apply(this, [options]);
             this._schema = options.schema || undefined;
             this._comparators = options.comparators || undefined;
+        };
+
+        this.postSync = function (observed) {
+            if (this.context && this.context.sync) {
+                console.log('FilterGroup calling ComposedQuery sync');
+                this.context.sync(this);
+            }
         };
 
         this.init(options);

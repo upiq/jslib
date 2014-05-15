@@ -476,6 +476,34 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             }
         };
 
+        this.normalizedValue = function () {
+            var complete = this.completionState(),
+                field = this.field,
+                value = this.value;
+            if (!complete) {
+                return null;
+            }
+            if (field.fieldtype === 'Int' && value != null) {
+                return parseInt(value, 10);
+            }
+            if (field.fieldtype === 'Float' && value != null) {
+                return parseFloat(value);
+            }
+            return this.value;
+        };
+
+        this.toJSON = function () {
+            var complete = this.completionState(),
+                payload = {};
+            if (!complete) {
+                return {};
+            }
+            payload.field = this.field.name;
+            payload.comparator = this.comparator;
+            payload.value = this.normalizedValue(this.value);
+            return payload;
+        };
+
         this.completionState = function () {
             var field = this._field,
                 comparator = this._comparator,
@@ -750,14 +778,19 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             queryOpCells.text(this.operator);
         };
 
-        this.newQuery = function () {
-            var q = new ns.FieldQuery({
-                context: this
-            });
+        this.newQuery = function (options) {
+            var opts = options || {},
+                q = new ns.FieldQuery({
+                    context: this,
+                    field: opts.field,
+                    comparator: opts.comparator,
+                    value: opts.value
+                });
             this.add(q);
             if (this.target) {
                 this.syncQueryOpDisplay();
             }
+            return q;
         };
 
         this.initView = function () {
@@ -870,11 +903,35 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             var query = new ns.FieldQuery(options);
         };
 
+        this.isComplete = function () {
+            var querycomplete = function (q) { return q.completionState(); };
+            return (this.values().filter(querycomplete).length > 0);
+        };
+
         // de-dupe checker, used by FieldQuery validation
         this.fieldnameInUse = function (name) {
             var qField = function (q) { return (q.field && q.field.name); },
                 inUse = this.values().map(qField);
             return (inUse.indexOf(name) !== -1);
+        };
+
+        this.toJSON = function () {
+            var payload = {},
+                queries = this.values().filter(
+                    function (query) {
+                        return query.completionState();
+                    },
+                    this
+                ).map(
+                    function (query) {
+                        return query.toJSON();
+                    },
+                    this
+                );
+            payload.uid = this.id;
+            payload.operator = this.operator;
+            payload.rows = queries;
+            return payload;
         };
 
         this.init(options);
@@ -909,11 +966,12 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
 
         this.newFilter = function () {
             var target = $('<div>').appendTo(this.target),
-                filter = new ns.RecordFilter({
+                rfilter = new ns.RecordFilter({
                     context: this,
                     target: target
                 });
-            this.add(filter);
+            this.add(rfilter);
+            return rfilter;
         };
 
         this.initView = function () {
@@ -971,6 +1029,32 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             });
         };
 
+        this.isComplete = function () {
+            var filtercomplete = function (rfilter) {
+                return rfilter.isComplete();
+            };
+            return (this.values().filter(filtercomplete).length > 0);
+        };
+
+        this.toJSON = function () {
+            var payload = {},
+                rfilters = this.values().filter(
+                    function (rfilter) {
+                        return rfilter.isComplete();
+                    },
+                    this
+                ).map(
+                    function (rfilter) {
+                        return rfilter.toJSON();
+                    },
+                    this
+                );
+            payload.uid = this.id;
+            payload.operator = this.operator;
+            payload.filters = rfilters;
+            return payload;
+        };
+
         this.init(options);
     };
     core.klass.subclasses(ns.FilterGroup, core.Container);
@@ -989,6 +1073,25 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             this._comparators = options.comparators || undefined;
         };
 
+        this.toJSON = function () {
+            var payload = {},
+                groups = this.values().filter(
+                    function (group) {
+                        return group.isComplete();
+                    },
+                    this
+                ).map(
+                    function (group) {
+                        return group.toJSON();
+                    },
+                    this
+                );
+            payload.uid = this.id;
+            payload.operator = this.operator;
+            payload.groups = groups;
+            return payload;
+        };
+
         this.init(options);
     };
     core.klass.subclasses(ns.ComposedQuery, core.Container);
@@ -996,23 +1099,95 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
 
     // application initialization
 
-    ns.editorReady = function () {
+    ns.initQuery = function (name, data) {
+        var managerDiv = $('div.filter-manager'),
+            wrapper = $('<div class="querywrap">').appendTo(managerDiv),
+            h3title = $('<h3>' + name + '</h3>').appendTo(wrapper),
+            target = $('<div>').appendTo(wrapper),
+            saveContext = {
+                // fake context to save/sync group
+                sync: function (group) {
+                    var groupExport = group.toJSON(),
+                        composedExport = {
+                            'name': name,
+                            'operator': 'union',
+                            'groups': groupExport
+                        },
+                        json = JSON.stringify(composedExport, null, 2),
+                        form = $('#payloads'),
+                        input = $('#payload-query-' + name);
+                    input.val(json);  // save to payload input
+                }
+            },
+            group = new ns.FilterGroup({
+                target: target,
+                schema: ns.schema,
+                comparators: ns.comparators,
+                operator: data.operator,
+                context: saveContext
+            });
+        (data.filters || []).forEach(function (rf_data) {
+            var rfilter = group.newFilter();
+            rfilter.operator = rf_data.operator || 'AND';
+            (rfilter.rows || []).forEach(function (rowdata) {
+                var field = ns.schema.get(rowdata.field),
+                    opts = {
+                        field: field,
+                        comparator: rowdata.comparator,
+                        value: rowdata.value
+                    };
+                if (!field) {
+                    console.log('WARNING: cannot find field ' + rowdata.field);
+                    return;
+                }
+                rfilter.newQuery(opts);
+            }, this);
+        }, this);
     };
 
-    ns.initUI = function () {
+    ns.advancedEditorReady = function () {
+        var managerDiv = $('div.filter-manager'),
+            numq = $('form#payloads input#payload-query-numerator'),
+            denq = $('form#payloads input#payload-query-denominator'),
+            hasNum = (!!numq.length),
+            hasDen = (!!denq.length),
+            group;
+        // get JSON data from (hidden) form inputs
+        if (hasNum) {
+            // setup numerator query, load
+            numq = JSON.parse(numq.val());
+            group = (numq.groups) ? numq.groups[0] : {};
+            ns.initQuery('numerator', group);
+        }
+        if (hasDen) {
+            denq = JSON.parse(denq.val());
+            group = (denq.groups) ? denq.groups[0] : {};
+            ns.initQuery('denominator', group);
+        }
+
+        // get target div for each field group
+        // get each composed query payload from hidden form inputs
+        // get data for first field group in each query
+        // construct field group with target, data
+        // set as ns.groups (key by num/den)
+    };
+
+    ns.initAdvancedEditor = function () {
         // load global configuration for editor, then call editorReady
         // as callback.
+        ns.queries = {};
         cAjax({
             url: schemaURL(),
             success: function (data) {
                 ns.schema = new uu.queryschema.Schema(data);
                 ns.comparators = new uu.queryschema.Comparators(ns.schema);
-                ns.editorReady();
+                ns.advancedEditorReady();
             }
         });
     };
 
-    $(document).ready(function () {
+    // (interim) app init bits for testing only
+    ns.initTesting = function () {
         var target1 = $('<div>').appendTo($('div.editor1')),
             target2 = $('<div>').appendTo($('div.editor2')),
             target3 = $('<div>').appendTo($('div.grouped')),
@@ -1033,8 +1208,16 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                 schema: schema,
                 comparators: comparators
             });
+        ns.group = group;  // TODO (testing)
+    };
 
-        //ns.initUI();
+    $(document).ready(function () {
+        if ($('body').attr('data-appname') === 'querytest') {
+            ns.initTesting();
+        }
+        if ($('form#payloads').attr('data-editor') === 'advanced') {
+            ns.initAdvancedEditor();
+        }
     });
 
     return ns;

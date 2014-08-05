@@ -1,0 +1,405 @@
+.listwidget {
+    position:relative;
+    overflow:hidden;
+    margin:0.3em 0;
+    padding:0;
+    border:1px solid rgba(159,170,170,1);
+    border-top-left-radius:0.3em;
+    border-bottom-left-radius:0.3em;
+    background:linear-gradient(#FFFFFF 20%, #F0F0F0 50%, #E8E8E8 52%, #FFFFFF 80%, #FFFFFF 100%);
+}
+
+.listwidget.expanded .instructions {
+    display:block;
+}
+
+.listwidget .listcontrol {
+    position:absolute;
+    z-index:99;
+    left:0;
+    top:0;
+    height:100%;
+    width:0.92em;
+    background: linear-gradient(to right, rgba(159,170,170,1) 83%,rgba(80,92,92,1) 99%);
+    text-align:center;
+    font-family:Georgia;
+    padding:0 0.4em 0.5em 0.05em;
+    border-top-left-radius:0.2em;
+    border-bottom-left-radius:0.2em;
+}
+
+/* animated direction control button: common styles for any state */
+
+.listwidget div.toggle-switch {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing:border-box;
+    width:1.2em;
+    height:1.2em;
+    border-radius:1.2em;
+    /* background-color:#eee; */  background-color:rgba(255,255,255,0.1);
+    text-align:center;
+    padding-left:0.125em;
+    margin-top:0.2em;
+    box-shadow: inset -1px 0 1px 0.5px rgba(0,0,0,0.4);
+    overflow:hidden;
+    border:1px solid rgba(0,0,0,0.1);
+    }
+
+.listwidget div.toggle-switch:hover {
+    background-color:rgba(255,255,255,0.3);
+}
+
+.listwidget a.toggle-button {
+    /* block element with border and padding included in box model width */
+    display:block;
+    font-size:90%;
+    color:#777;
+    text-decoration:none;
+    margin-right:0;
+}
+
+
+/* animated direction control button: collapsed/default state: */
+@keyframes rot_list_btn {
+    from {
+    }
+    to {
+        color:#09f;
+        padding:0;
+        margin-right:0.225em;
+        padding-top:0;
+        transform: rotate(90deg);
+        -webkit-transform: rotate(90deg);
+    }
+}
+
+@-webkit-keyframes rot_list_btn {
+    from {
+    }
+    to {
+        color:#09f;
+        padding:0;
+        margin-right:0.325em;
+        padding-top:0;
+        transform: rotate(90deg);
+        -webkit-transform: rotate(90deg);
+    }
+}
+
+@-moz-keyframes rot_list_btn {
+    from {
+    }
+    to {
+        color:#09f;
+        padding:0;
+        /* margin works around apparent -moz-animation-fill-mode bug,
+         * appears to copy final keyframe to wrong offset
+         */
+        margin-right:0;
+        margin-left:0.1em;
+        padding-top:0.225em;
+        transform: rotate(90deg);
+        -webkit-transform: rotate(90deg);
+    }
+}
+
+.listwidget.compact div.toggle-switch a.toggle-button:hover,
+.listwidget.compact div.toggle-switch a.toggle-button:focus {
+    cursor:default;
+    background-color:transparent !important;
+    animation-duration:1s;
+    animation-name: rot_list_btn;
+    animation-fill-mode: both;
+    -moz-animation-duration:1s;
+    -moz-animation-name: rot_list_btn;
+    -moz-animation-fill-mode: forwards;
+    -webkit-animation-duration:1s;
+    -webkit-animation-name: rot_list_btn;
+    -webkit-animation-fill-mode: forwards;
+}
+
+
+/* animated direction control button: expanded state: */
+.listwidget.expanded div.toggle-switch {
+    padding-left:0em;
+    padding-top:0.1125em;
+}
+
+@keyframes rot_expanded_btn {
+    from {
+    }
+    to {
+        color:#09f;
+        padding:0;
+        padding-top:0.285em;
+        padding-left:0.37em;
+        transform: rotate(-90deg);
+        -webkit-transform: rotate(-90deg);
+    }
+}
+
+@-webkit-keyframes rot_expanded_btn {
+    from {
+    }
+    to {
+        color:#09f;
+        padding:0;
+        padding-top:0.285em;
+        padding-left:0.37em;
+        transform: rotate(-90deg);
+        -webkit-transform: rotate(-90deg);
+    }
+}
+
+@-moz-keyframes rot_expanded_btn {
+    from {
+    }
+    to {
+        color:#09f;
+        padding:0;
+        padding-top:0.285em;
+        padding-left:0.37em;
+        transform: rotate(-90deg);
+        -webkit-transform: rotate(-90deg);
+    }
+}
+
+.listwidget.expanded div.toggle-switch a.toggle-button {
+    margin-right:1px;
+}
+
+.listwidget.expanded div.toggle-switch a.toggle-button:hover,
+.listwidget.expanded div.toggle-switch a.toggle-button:focus
+{
+    cursor:pointer;
+    background-color:transparent !important;
+    outline:none !important;
+    animation-duration:1s;
+    animation-name: rot_expanded_btn;
+    animation-fill-mode: both;
+    -moz-animation-duration:1s;
+    -moz-animation-name: rot_expanded_btn;
+    -moz-animation-fill-mode: both;
+    -webkit-animation-duration:1s;
+    -webkit-animation-name: rot_expanded_btn;
+    -webkit-animation-fill-mode: forwards;
+}
+
+
+/* list-chooser styles */
+
+.listwidget ul.list-chooser {
+    display:block;
+    position:relative;
+    overflow:hidden;
+    margin:0 0;
+    left:1.6em;
+    top:0;
+    height:auto;
+    width:auto;
+    /*
+    height:auto;
+    width:96%;
+    border:1px solid rgba(32,32,32,0.2);
+    */
+    font-size:85%;
+    padding:0.1em 0.25em 0.25em 0.1em;
+}
+
+.listwidget ul.list-chooser > li {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing:border-box;
+    position:relative;
+    line-height:100%;
+    font-family:Helvetica Neue,Helvetica,Arial;
+    display:block;
+    float:left;
+    max-width:55%;
+    border:1px solid #aaa;
+    list-style-type:none;
+    border-radius:0.2em;
+    background:linear-gradient(#F4F4F4 20%, #F0F0F0 50%, #E8E8E8 52%, #EEEEEE 100%);
+    background-color:#eee;
+    background-clip: padding-box;
+    box-shadow: 0 0 2px #FFFFFF inset, 0 1px 0 rgba(0, 0, 0, 0.05);
+    padding:0.1em 0.9em 0.1em 0.2em;
+    margin-left:0.3em;
+    margin:0.1em 0.2em 0.05em 0.1em;
+}
+
+.listwidget.expanded ul.list-chooser > li,
+.listwidget ul.list-chooser > li.expanded {
+    clear:both;
+    width:96%;
+    max-width:100%;
+    /*
+    width:95%;
+    max-width:95%;
+    */
+}
+
+.listwidget ul.list-chooser > li.search {
+    border:none;
+    background:transparent;
+    padding:0;
+    /*
+    position:absolute;
+    right:0;
+    top:0;
+    */
+    margin-right:2em;
+}
+
+.listwidget.expanded ul.list-chooser > li.search {
+    position:relative;
+    right:none;
+    left:0;
+    top:none;
+    clear:both;
+    float:left;
+    width:95%;
+}
+
+.listwidget ul.list-chooser > li.search input {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing:border-box;
+    border:1px solid #ddd;
+    font-size:90%;
+    margin:0;
+}
+
+.listwidget.expanded ul.list-chooser > li.search input {
+    width:101%;
+}
+
+.listwidget ul.list-chooser > li label {
+    cursor:move;
+    display:block;
+    float:left;
+    display:block;
+    width:100%;
+    padding-right:0.3em;
+}
+
+.listwidget.expanded ul.list-chooser > li label {
+    font-weight:bold;
+    font-size:115%;
+    line-height:130%;
+    width:auto;
+    overflow:hidden;
+}
+
+.listwidget.expanded ul.list-chooser > li label:before {
+    content:"\2263";
+    font-family:Helvetica Neue,Helvetica,Arial;
+    font-size:100%;
+    color:#ccc;
+    margin-right:0.1em;
+    margin-left:0.1em;
+    display:inline-block;
+    transform:scale(1, 0.65);
+    -webkit-transform:scale(1.2,1.1);
+}
+
+.listwidget ul.list-chooser > li .details {
+    display:none;
+    clear:both;
+    width:100%;
+    padding:0.1em 0.3em;
+    border-top:1px solid #ddd;
+    font-size:90%;
+    color:#677;
+}
+
+.listwidget.expanded ul.list-chooser > li .details,
+.listwidget ul.list-chooser > li.expanded .details {
+    display:block;  
+}
+
+.listwidget ul.list-chooser > li .details ul {
+    padding-left:1.5em;
+}
+
+.listwidget.expanded ul.list-chooser > li .term-actions {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing:border-box;
+    display:block;
+    position:absolute;
+    z-index:199;
+    top:0;
+    left:0;
+    width:100%;
+    background-color:rgba(255,0,0,0.3);
+}
+
+.listwidget ul.list-chooser > li a.remove-term {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing:border-box;
+    display:block;
+    position:absolute;
+    z-index:199;
+    top:0;
+    right:0;
+    text-decoration:none;
+    cursor:pointer;
+    font-weight:bold;
+    color:#999;
+    margin-right:0.2em;
+}
+
+.listwidget.expanded ul.list-chooser > li a.remove-term {
+    padding:0 0.65em; 
+    line-height:140%;
+}
+
+.listwidget ul.list-chooser > li a.remove-term:hover {
+   color:black;
+   font-size:120%;
+   overflow:hidden;
+   margin-top:-0.075em;
+   text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.4);
+}
+
+/*
+.listwidget ul.list-chooser > li a.remove-term {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing:border-box;
+    display:block;
+    position:absolute;
+    z-index:199;
+    top:0;
+    right:0;
+    width:auto;
+    text-decoration:none;
+    cursor:pointer;
+    font-weight:bold;
+    color:#999;
+    margin-right:0.2em;
+}
+
+.listwidget.expanded ul.list-chooser > li a.remove-term {
+    width:100%;
+    line-height:140%;
+    text-align:right;
+    padding-right:0.65em;
+    left:0;
+}
+
+.listwidget ul.list-chooser > li a.remove-term:hover {
+   color:black;
+   font-size:120%;
+   overflow:hidden;
+   margin-top:-0.075em;
+   text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.4);
+}
+*/
+
+.listwidget .listing-footer {
+    clear:both;
+}

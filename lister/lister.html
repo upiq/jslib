@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+  <head>
+   <title>List control</title>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+   <script type="text/javascript" src="http://code.jquery.com/jquery-1.4.4.min.js"></script>
+   <script type="text/javascript" src="lister.js"></script>
+   <link rel="stylesheet" type="text/css" href="listing.css" />
+  </head>
+  <body>
+    <h1>List widget demo</h1>
+    <div class="listwidget compact animated-toggle">
+      <div class="listcontrol">
+       <div class="toggle-switch">
+        <a href="javascript:void(0)" class="toggle-button" title="Click to expand listing" tabindex="99" >&#x25BA;</a>
+       </div>
+      </div>
+      <ul class="list-chooser">
+        <li tabindex="99">
+            <div class="term-actions">
+                <a class="remove-term" href="javascript:void(0)" title="Remove" tabindex="99">&times;</a>
+            </div>
+            <input type="hidden" id="IDHERE" />
+            <label for="IDHERE">My first item</label>
+            <div class="details">
+                Detailed rich text concerning the term.  Lorem ipsum dolor sit amet,
+                consectetur adipisicing elit, sed do eiusmod tempor incididunt ut 
+                labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+                exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+            </div>
+        </li>
+        <li tabindex="99">
+            <div class="term-actions">
+                <a class="remove-term" href="javascript:void(0)" title="Remove" tabindex="99">&times;</a>
+            </div>
+            <input type="hidden" id="IDHERE1" />
+            <label for="IDHERE1">Another item</label>
+            <div class="details">
+                <ul>
+                    <li><strong>Id:</strong> This</li>
+                    <li><strong>Path:</strong>/path/to/this/thing</li>
+                </ul>
+                <p>This is a summary of the item.</p>
+            </div>
+        </li>
+        <li tabindex="99">
+            <div class="term-actions">
+                <a class="remove-term" href="javascript:void(0)" title="Remove" tabindex="99">&times;</a>
+            </div>
+            <input type="hidden" id="IDHERE1" />
+            <label for="IDHERE1">Another item</label>
+            <div class="details">
+                <ul>
+                    <li><strong>Id:</strong> This</li>
+                    <li><strong>Path:</strong>/path/to/this/thing</li>
+                </ul>
+                <p>This is a summary of the item.</p>
+            </div>
+        </li>
+        <li tabindex="99">
+            <div class="term-actions">
+                <a class="remove-term" href="javascript:void(0)" title="Remove" tabindex="99">&times;</a>
+            </div>
+            <input type="hidden" id="IDHERE1" />
+            <label for="IDHERE1">Another item</label>
+            <div class="details">
+                <ul>
+                    <li><strong>Id:</strong> This</li>
+                    <li><strong>Path:</strong>/path/to/this/thing</li>
+                </ul>
+                <p>This is a summary of the item.</p>
+            </div>
+        </li>
+        <li tabindex="99">
+            <div class="term-actions">
+                <a class="remove-term" href="javascript:void(0)" title="Remove" tabindex="99">&times;</a>
+            </div>
+            <input type="hidden" id="IDHERE2" />
+            <label for="IDHERE2">The other thing almost forgotten</label>
+            <div class="details">
+                Detailed rich text concerning the term.  Lorem ipsum dolor sit amet,
+                consectetur adipisicing elit, sed do eiusmod tempor incididunt ut 
+                labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+                exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+            </div>
+        </li>
+        <li class="search"><input tabindex="99" type="text" placeholder="Input search term or value" /></li>
+      </ul>
+      <div class="listing-footer"></div>
+    </div>
+    <div class="listwidget expanded">
+      <div class="listcontrol">
+       <div class="toggle-switch">
+        <a href="javascript:void(0)" class="toggle-button" title="Click to collapse listing to compact form" tabindex="99" >&#x25BC;</a>
+       </div>
+      </div>
+      <ul class="list-chooser">
+        <li tabindex="99">
+            <div class="term-actions">
+                <a class="remove-term" href="javascript:void(0)" title="Remove" tabindex="99">&times;</a>
+            </div>
+            <input type="hidden" id="IDHEREa" />
+            <label for="IDHEREa">One</label>
+            <div class="details">
+                Detailed rich text concerning the term.  Lorem ipsum dolor sit amet,
+                consectetur adipisicing elit, sed do eiusmod tempor incididunt ut 
+                labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+                exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+            </div>
+        </li>
+        <li tabindex="99">
+            <div class="term-actions">
+                <a class="remove-term" href="javascript:void(0)" title="Remove" tabindex="99">&times;</a>
+            </div>
+            <input type="hidden" id="IDHERE1a" />
+            <label for="IDHERE1a">Two</label>
+            <div class="details">
+                <ul>
+                    <li><strong>Id:</strong> This</li>
+                    <li><strong>Path:</strong>/path/to/this/thing</li>
+                </ul>
+                <p>This is a summary of the item.</p>
+            </div>         
+        </li>
+        <li tabindex="99">
+            <div class="term-actions">
+                <a class="remove-term" href="javascript:void(0)" title="Remove" tabindex="99">&times;</a>
+            </div>
+            <input type="hidden" id="IDHERE2a" />
+            <label for="IDHERE2a">Threeeee!</label>
+            <div class="details">
+                Detailed rich text concerning the term.  Lorem ipsum dolor sit amet,
+                consectetur adipisicing elit, sed do eiusmod tempor incididunt ut 
+                labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+                exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+            </div>
+        </li>
+        <li class="search"><input tabindex="99" type="text" placeholder="Input search term or value" /></li>
+      </ul>
+      <div class="listing-footer"></div>
+    </div>
+    <div>Content here goes below the list widget.  Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</div>
+  </body>
+</html>

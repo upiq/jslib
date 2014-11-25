@@ -1,4 +1,4 @@
-/** 
+/**
  * criteria.js: criteria editor / support advanced and basic criteria query
  *              editing.
  */
@@ -58,6 +58,9 @@ uu.queryschema = (function ($, ns, uu, core, global) {
         this.display_label = function () {
             if (typeof this.prefix === 'string') {
                 return this.prefix + ' ' + this.label;
+            }
+            if (this.label === 'yes' || this.label === 'no') {
+                return (this.label === 'yes') ? 'Yes' : 'No';  // title-case
             }
             return this.label;
         };
@@ -128,14 +131,16 @@ uu.queryschema = (function ($, ns, uu, core, global) {
         'does not contain',
        '\u2209'
         );
-    c.EQ = new ns.TermInfo('Eq', 'is equal to','=');
-    c.GE = new ns.TermInfo('Ge', 'is greater than or equal to','\u2264');
-    c.GT = new ns.TermInfo('Gt', 'is greater than','>');
-    c.INRANGE = new ns.TermInfo('InRange', 'is between','(\u2026)');
-    c.LE = new ns.TermInfo('Le', 'is less than or equal to','\u2265');
-    c.LT = new ns.TermInfo('Lt', 'is less than','<');
-    c.NOTEQ = new ns.TermInfo('NotEq', 'is not','\u2260');
-    c.NOTINRANGE = new ns.TermInfo('NotInRange', 'is not between','\u2209');
+    c.EQ = new ns.TermInfo('Eq', 'is equal to', '=');
+    c.GE = new ns.TermInfo('Ge', 'is greater than or equal to', '\u2264');
+    c.GT = new ns.TermInfo('Gt', 'is greater than', '>');
+    c.INRANGE = new ns.TermInfo('InRange', 'is between', '(\u2026)');
+    c.LE = new ns.TermInfo('Le', 'is less than or equal to', '\u2265');
+    c.LT = new ns.TermInfo('Lt', 'is less than', '<');
+    c.NOTEQ = new ns.TermInfo('NotEq', 'is not', '\u2260');
+    c.NOTINRANGE = new ns.TermInfo('NotInRange', 'is not between', '\u2209');
+    c.NOTANY = new ns.TermInfo('NotAny', 'does not contain any of', '\u2212');
+    c.NOTALL = new ns.TermInfo('NotAll', 'does not contain all of', '\u2288');
 
     ns.COMPARATORS_BY_INDEX = {
         'field': [
@@ -143,7 +148,7 @@ uu.queryschema = (function ($, ns, uu, core, global) {
             c.NOTINRANGE
         ],
         'text': [c.CONTAINS, c.DOESNOTCONTAIN],
-        'keyword': [c.ANY, c.ALL, c.DOESNOTCONTAIN]
+        'keyword': [c.ANY, c.ALL, c.NOTANY, c.NOTALL],
         };
 
     ns.CHOICE_OMIT = [c.LT, c.LE, c.GT, c.GE, c.INRANGE, c.NOTINRANGE];
@@ -463,7 +468,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             ns.FieldQuery.prototype.init.apply(this, [options]);
             this._field = options.field || null;
             this._comparator = options.comparator || null;
-            this._value = options.value || null;
+            this._value = (options.value !== undefined) ? options.value : null;
             this._schema = options.schema || undefined;
             this._comparators = options.comparators || undefined;
             if (this._field && this.schema) {
@@ -498,7 +503,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             if (!complete) {
                 return {};
             }
-            payload.field = this.field.name;
+            payload.fieldname = this.field.name;
             payload.comparator = this.comparator;
             payload.value = this.normalizedValue(this.value);
             return payload;
@@ -525,7 +530,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
             var field = this.field,
                 comparator = this.comparator,
                 choice = (!!field) ? field.isChoice() : false,
-                chooseOnlyOne = (['Any', 'All'].indexOf(comparator) === -1),
+                chooseOnlyOne = (['Any', 'All', 'NotAny', 'NotAll'].indexOf(comparator) === -1),
                 select;
             if (!field || !comparator) {
                 return null;
@@ -634,15 +639,18 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                     termid = inputName + '-' + value;
                     input.attr('name', inputName)
                          .attr('id', termid)
-                         .attr('value', term.value);
-                    if (term.value === self.value) {
-                        input.attr('checked', 'CHECKED');
-                    }
-                    $('<label>'+label+'</label>').attr('for', termid).appendTo(idiv);
-                    idiv.appendTo(valueCell);
-                    input.unbind().change(function () {
-                        self.value = input.val();
-                    });
+                         .attr('value', value);
+                if (field.fieldtype === 'Bool') {
+                    value = (value === 'yes') ? true : false;
+                }
+                if (value === self.value) {
+                    input.attr('checked', 'CHECKED');
+                }
+                $('<label>'+label+'</label>').attr('for', termid).appendTo(idiv);
+                idiv.appendTo(valueCell);
+                input.unbind().change(function () {
+                    self.value = input.val();
+                });
             });
         };
 
@@ -1100,7 +1108,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
     // application initialization
 
     ns.initQuery = function (name, data) {
-        var managerDiv = $('div.filter-manager'),
+        var managerDiv = $('#filter-manager'),
             wrapper = $('<div class="querywrap">').appendTo(managerDiv),
             h3title = $('<h3>' + name + '</h3>').appendTo(wrapper),
             target = $('<div>').appendTo(wrapper),
@@ -1111,7 +1119,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                         composedExport = {
                             'name': name,
                             'operator': 'union',
-                            'groups': groupExport
+                            'groups': [groupExport]
                         },
                         json = JSON.stringify(composedExport, null, 2),
                         form = $('#payloads'),
@@ -1126,11 +1134,12 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
                 operator: data.operator,
                 context: saveContext
             });
+        ns.groups[name] = group;
         (data.filters || []).forEach(function (rf_data) {
             var rfilter = group.newFilter();
             rfilter.operator = rf_data.operator || 'AND';
-            (rfilter.rows || []).forEach(function (rowdata) {
-                var field = ns.schema.get(rowdata.field),
+            (rf_data.rows || []).forEach(function (rowdata) {
+                var field = ns.schema.get(rowdata.fieldname),
                     opts = {
                         field: field,
                         comparator: rowdata.comparator,
@@ -1146,7 +1155,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
     };
 
     ns.advancedEditorReady = function () {
-        var managerDiv = $('div.filter-manager'),
+        var managerDiv = $('#filter-manager'),
             numq = $('form#payloads input#payload-query-numerator'),
             denq = $('form#payloads input#payload-query-denominator'),
             hasNum = (!!numq.length),
@@ -1175,7 +1184,7 @@ uu.queryeditor = (function ($, ns, uu, core, global) {
     ns.initAdvancedEditor = function () {
         // load global configuration for editor, then call editorReady
         // as callback.
-        ns.queries = {};
+        ns.groups = {};
         cAjax({
             url: schemaURL(),
             success: function (data) {

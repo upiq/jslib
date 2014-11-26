@@ -1,5 +1,13 @@
-/*jshint browser: true, nomen: false, eqnull: true, es5:true, trailing:true, undef:true */
-/*global jQuery, window */
+/*jshint
+    browser: true,
+    nomen: false,
+    eqnull: true,
+    es5:true,
+    trailing:true,
+    undef:true
+    */
+
+/*global window, moment, console */
 
 // coremodel namespace; can be overridden prior to loading
 var COREMODELNS = 'coremodel';  // global ns, can be 
@@ -55,7 +63,7 @@ window[COREMODELNS] = (function ($, core) {
 
         ns.subclasses = function subclasses(cls, base) {
             cls.prototype = new base();
-            cls.prototype.superclass = base;
+            cls.prototype.__super__ = base;
             cls.prototype.constructor = cls;
         };
 
@@ -77,7 +85,7 @@ window[COREMODELNS] = (function ($, core) {
 
         ns.base = function base(o) {
             o = (typeof(o) === 'function') ? new o() : o;
-            return ns.prototypeFor(o).superclass || null;
+            return ns.prototypeFor(o).__super__ || null;
         };
 
         /**
